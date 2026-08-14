@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entrar na Conta | Creditxa</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link rel="icon" type="image/png" href="../assets/images/favicon-32.png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #001836 0%, #003F8C 55%, #1565C0 100%);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px; pointer-events: none;
+    }
+    .card {
+      background: #fff; border-radius: 24px; padding: 44px 40px;
+      max-width: 440px; width: 100%; box-shadow: 0 32px 80px rgba(0,0,0,0.32);
+      position: relative; z-index: 1; animation: up 0.5s ease both;
+    }
+    @keyframes up { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .logo-wrap { text-align: center; margin-bottom: 10px; }
+    .logo-wrap img { height: 36px; }
+    .logo-wrap p { font-size: 0.84rem; color: #5E7A9A; margin-top: 6px; }
+
+    /* Tabs */
+    .tabs { display: flex; background: #F4F7FB; border-radius: 10px; padding: 4px; margin-bottom: 26px; }
+    .tab { flex: 1; padding: 10px; text-align: center; font-size: 0.88rem; font-weight: 700;
+      border: none; background: none; border-radius: 8px; cursor: pointer;
+      color: #5E7A9A; transition: 0.2s; }
+    .tab.active { background: #fff; color: #003F8C; box-shadow: 0 1px 6px rgba(0,0,0,0.1); }
+
+    /* Form fields */
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 0.78rem; font-weight: 700; color: #2D4060;
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .field input { width: 100%; padding: 12px 14px; border: 1.5px solid #E2E8F0;
+      border-radius: 8px; font-size: 0.92rem; color: #0A1929; outline: none;
+      background: #F4F7FB; transition: 0.2s; }
+    .field input:focus { border-color: #0093E8; background: #fff; box-shadow: 0 0 0 3px rgba(0,147,232,0.1); }
+    .field .hint { font-size: 0.73rem; color: #90A0B7; margin-top: 4px; }
+    .field.error input { border-color: #C62828; }
+    .field .errmsg { font-size: 0.75rem; color: #C62828; margin-top: 4px; display: none; }
+    .field.error .errmsg { display: block; }
+
+    .forgot { text-align: right; margin-bottom: 16px; }
+    .forgot a { font-size: 0.82rem; color: #0093E8; font-weight: 600; text-decoration: none; }
+
+    .btn-submit {
+      width: 100%; padding: 14px; background: #003F8C; color: #fff;
+      border: none; border-radius: 8px; font-size: 0.97rem; font-weight: 700;
+      cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-submit:hover:not(:disabled) { background: #0093E8; }
+    .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    .spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .alert {
+      padding: 12px 16px; border-radius: 8px; font-size: 0.84rem;
+      margin-bottom: 16px; display: none;
+    }
+    .alert.error   { background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; }
+    .alert.success { background: #E8F5E9; color: #2E7D32; border: 1px solid #C8E6C9; }
+    .alert.info    { background: #E3F0FF; color: #003F8C; border: 1px solid #BBDEFB; }
+
+    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+    .divider::before, .divider::after { content:''; flex:1; height:1px; background:#E2E8F0; }
+    .divider span { font-size: 0.78rem; color: #90A0B7; }
+
+    .footer-links { text-align: center; margin-top: 22px; padding-top: 18px; border-top: 1px solid #E2E8F0; }
+    .footer-links a { display: inline-block; font-size: 0.82rem; color: #90A0B7; text-decoration: none; margin: 4px 0; transition: 0.2s; }
+    .footer-links a:hover { color: #003F8C; }
+    .footer-links .admin-link { margin-top: 10px; padding-top: 10px; border-top: 1px solid #E2E8F0; }
+
+    .secure-badge {
+      margin-top: 14px; padding: 10px 14px; background: #E3F0FF;
+      border-radius: 8px; display: flex; align-items: center; gap: 8px;
+      font-size: 0.78rem; color: #003F8C;
+    }
+
+    /* Dashboard panel shown after login */
+    #dashPanel { display: none; }
+    .dash-welcome { text-align: center; padding: 10px 0 20px; }
+    .dash-welcome .avatar { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #003F8C, #0093E8); color: #fff; font-weight: 800; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+    .dash-welcome h2 { font-size: 1.1rem; font-weight: 800; color: #0A1929; }
+    .dash-welcome p  { font-size: 0.84rem; color: #5E7A9A; margin-top: 4px; }
+    .dash-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+    .dash-card { background: #F4F7FB; border-radius: 10px; padding: 16px; }
+    .dash-card .dc-num { font-size: 1.3rem; font-weight: 800; color: #003F8C; }
+    .dash-card .dc-lbl { font-size: 0.75rem; color: #5E7A9A; margin-top: 3px; }
+    .dash-card .dc-badge { display: inline-block; margin-top: 8px; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 100px; }
+    .badge-pending  { background: #FFF3E0; color: #E65100; }
+    .badge-approved { background: #E8F5E9; color: #2E7D32; }
+    .badge-none     { background: #F4F7FB; color: #5E7A9A; }
+    .btn-logout { width: 100%; margin-top: 10px; padding: 11px; background: #F4F7FB; color: #5E7A9A; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn-logout:hover { background: #FFEBEE; color: #C62828; border-color: #FFCDD2; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo-wrap">
+    <a href="../index.html">
+      <img src="../assets/images/creditxa-logo.png" alt="Creditxa" />
+    </a>
+    <p>A sua área pessoal segura</p>
+  </div>
+
+  <div id="alertBox" class="alert"></div>
+
+  <!-- ═══ AUTH PANEL ═══ -->
+  <div id="authPanel">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login',this)">Iniciar Sessão</button>
+      <button class="tab" onclick="switchTab('register',this)">Criar Conta</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="loginForm" style="display:block;" onsubmit="return false;">
+      <div class="field" id="f-login-email">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="o.seu@email.pt" autocomplete="email" required />
+        <div class="errmsg">Introduza um email válido.</div>
+      </div>
+      <div class="field" id="f-login-pass">
+        <label>Palavra-passe</label>
+        <input type="password" id="loginPass" placeholder="A sua palavra-passe" autocomplete="current-password" required />
+        <div class="errmsg">Palavra-passe obrigatória.</div>
+      </div>
+      <div class="forgot"><a href="#" onclick="handleForgotPassword(); return false;">Esqueci a palavra-passe?</a></div>
+      <button class="btn-submit" id="btnLogin" onclick="handleLogin()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:17px;height:17px;"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Entrar
+      </button>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form id="registerForm" style="display:none;" onsubmit="return false;">
+      <div class="field" id="f-reg-name">
+        <label>Nome Completo</label>
+        <input type="text" id="regName" placeholder="Maria Santos Ferreira" autocomplete="name" required />
+        <div class="errmsg">Nome obrigatório.</div>
+      </div>
+      <div class="field" id="f-reg-email">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="o.seu@email.pt" autocomplete="email" required />
+        <div class="errmsg">Introduza um email válido.</div>
+      </div>
+      <div class="field" id="f-reg-pass">
+        <label>Palavra-passe</label>
+        <input type="password" id="regPass" placeholder="Mínimo 8 caracteres" autocomplete="new-password" required minlength="8" />
+        <div class="hint">Mínimo 8 caracteres, inclua letras e números.</div>
+        <div class="errmsg">Mínimo 8 caracteres.</div>
+      </div>
+      <div class="field" id="f-reg-pass2">
+        <label>Confirmar Palavra-passe</label>
+        <input type="password" id="regPass2" placeholder="Repetir palavra-passe" autocomplete="new-password" required />
+        <div class="errmsg">As palavras-passe não coincidem.</div>
+      </div>
+      <button class="btn-submit" id="btnRegister" onclick="handleRegister()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:17px;height:17px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        Criar Conta
+      </button>
+    </form>
+
+    <div class="secure-badge">
+      🔒 Ligação protegida com SSL 256-bit. Os seus dados estão seguros.
+    </div>
+
+    <div class="footer-links">
+      <a href="../index.html">← Voltar ao início</a>
+      <div class="admin-link">
+        <a href="admin.html">🔐 Acesso Administrador</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PASSWORD RECOVERY PANEL ═══ -->
+  <div id="recoveryPanel" style="display:none;">
+    <div class="field" id="f-new-pass">
+      <label>Nova Palavra-passe</label>
+      <input type="password" id="newPass" placeholder="Mínimo 8 caracteres" minlength="8" />
+    </div>
+    <div class="field" id="f-new-pass2">
+      <label>Confirmar Nova Palavra-passe</label>
+      <input type="password" id="newPass2" placeholder="Repetir palavra-passe" />
+    </div>
+    <button class="btn-submit" id="btnSetNewPass" onclick="handleSetNewPassword()">Guardar Nova Palavra-passe</button>
+    <div class="footer-links"><a href="../index.html">← Voltar ao início</a></div>
+  </div>
+
+  <!-- ═══ DASHBOARD PANEL (shown after login) ═══ -->
+  <div id="dashPanel">
+    <div class="dash-welcome">
+      <div class="avatar" id="dashAvatar">U</div>
+      <h2 id="dashName">Bem-vindo!</h2>
+      <p id="dashEmail"></p>
+    </div>
+
+    <div class="dash-cards">
+      <div class="dash-card">
+        <div class="dc-num" id="dashAppCount">—</div>
+        <div class="dc-lbl">Pedidos de Crédito</div>
+        <div class="dc-badge badge-none" id="dashAppBadge">A carregar...</div>
+      </div>
+      <div class="dash-card">
+        <div class="dc-num" id="dashLoanCount">—</div>
+        <div class="dc-lbl">Empréstimos Ativos</div>
+        <div class="dc-badge badge-none" id="dashLoanBadge">A carregar...</div>
+      </div>
+    </div>
+
+    <div id="dashLoansDetail" style="margin-bottom:14px;"></div>
+
+    <button class="btn-logout" onclick="handleLogout()">
+      Terminar Sessão
+    </button>
+
+    <div class="footer-links">
+      <a href="../index.html">← Voltar ao início</a>
+    </div>
+  </div>
+</div>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL      = 'https://yatxtgfvwevvehnfoiql.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhdHh0Z2Z2d2V2dmVobmZvaXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNDQ4NTEsImV4cCI6MjA5NTYyMDg1MX0.A_cKC5fbBIUK9Ne8fAhQa2tf4B--19STcZZqzvFfFrk';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ── Tab switch ──
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('loginForm').style.display    = tab === 'login'    ? 'block' : 'none';
+    document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+    hideAlert();
+    clearFieldErrors();
+  }
+
+  // ── Alert helpers ──
+  function showAlert(msg, type) {
+    const el = document.getElementById('alertBox');
+    el.textContent = msg;
+    el.className = 'alert ' + type;
+    el.style.display = 'block';
+  }
+  function hideAlert() {
+    document.getElementById('alertBox').style.display = 'none';
+  }
+
+  // ── Field error helpers ──
+  function setFieldError(id, hasError) {
+    document.getElementById(id).classList.toggle('error', hasError);
+  }
+  function clearFieldErrors() {
+    document.querySelectorAll('.field').forEach(f => f.classList.remove('error'));
+  }
+
+  // ── Set button loading state ──
+  function setBtnLoading(id, loading, label) {
+    const btn = document.getElementById(id);
+    btn.disabled = loading;
+    btn.innerHTML = loading
+      ? '<div class="spinner"></div> A processar...'
+      : label;
+  }
+
+  // ── LOGIN ──
+  async function handleLogin() {
+    clearFieldErrors();
+    hideAlert();
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass  = document.getElementById('loginPass').value;
+    let valid = true;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFieldError('f-login-email', true); valid = false; }
+    if (!pass) { setFieldError('f-login-pass', true); valid = false; }
+    if (!valid) return;
+
+    setBtnLoading('btnLogin', true, '');
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    setBtnLoading('btnLogin', false,
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:17px;height:17px;"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Entrar');
+
+    if (error) {
+      const msgs = {
+        'Invalid login credentials': 'Email ou palavra-passe incorretos.',
+        'Email not confirmed': 'Por favor confirme o seu email antes de entrar.'
+      };
+      showAlert(msgs[error.message] || error.message, 'error');
+      return;
+    }
+    // Record this login so the admin panel can show it in the activity feed.
+    sb.rpc('log_activity', { p_action: 'login', p_details: 'Client login via login.html' })
+      .catch(() => {}); // never block the UI on a logging failure
+    await showDashboard(data.user);
+  }
+
+  // ── REGISTER ──
+  async function handleRegister() {
+    clearFieldErrors();
+    hideAlert();
+    const name  = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const pass  = document.getElementById('regPass').value;
+    const pass2 = document.getElementById('regPass2').value;
+    let valid = true;
+    if (!name)                                            { setFieldError('f-reg-name', true); valid = false; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFieldError('f-reg-email', true); valid = false; }
+    if (pass.length < 8)                                  { setFieldError('f-reg-pass', true); valid = false; }
+    if (pass !== pass2)                                   { setFieldError('f-reg-pass2', true); valid = false; }
+    if (!valid) return;
+
+    setBtnLoading('btnRegister', true, '');
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { full_name: name } }
+    });
+    setBtnLoading('btnRegister', false,
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:17px;height:17px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg> Criar Conta');
+
+    if (error) {
+      const msgs = { 'User already registered': 'Este email já está registado. Tente iniciar sessão.' };
+      showAlert(msgs[error.message] || error.message, 'error');
+      return;
+    }
+
+    // Check if email confirmation required
+    if (data.user && !data.session) {
+      showAlert('✅ Conta criada! Verifique o seu email para confirmar a sua conta antes de entrar.', 'success');
+      return;
+    }
+
+    // Auto-confirmed (e.g. Supabase configured without email confirmation)
+    if (data.session) {
+      await showDashboard(data.user);
+    }
+  }
+
+  // ── FORGOT PASSWORD ──
+  async function handleForgotPassword() {
+    const email = document.getElementById('loginEmail').value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showAlert('Introduza o seu email no campo acima primeiro.', 'error');
+      setFieldError('f-login-email', true);
+      return;
+    }
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/pages/login.html'
+    });
+    if (error) { showAlert(error.message, 'error'); return; }
+    showAlert('✅ Email de recuperação enviado. Verifique a sua caixa de entrada.', 'success');
+  }
+
+  // ── LOGOUT ──
+  async function handleLogout() {
+    // Log the event BEFORE signing out — log_activity() needs an
+    // active session to know who is logging out.
+    try { await sb.rpc('log_activity', { p_action: 'logout', p_details: 'Client logout via login.html' }); }
+    catch (e) { /* never block logout on a logging failure */ }
+    await sb.auth.signOut();
+    document.getElementById('dashPanel').style.display  = 'none';
+    document.getElementById('authPanel').style.display  = 'block';
+    hideAlert();
+  }
+
+  // ── SHOW DASHBOARD ──
+  async function showDashboard(user) {
+    document.getElementById('authPanel').style.display = 'none';
+    document.getElementById('dashPanel').style.display = 'block';
+
+    const meta = user.user_metadata || {};
+    const displayName = meta.full_name || user.email.split('@')[0];
+    document.getElementById('dashAvatar').textContent = displayName[0].toUpperCase();
+    document.getElementById('dashName').textContent   = 'Olá, ' + displayName + '!';
+    document.getElementById('dashEmail').textContent  = user.email;
+
+    // Load this user's applications from Supabase
+    // Match via email since auth_user_id may not be set yet for first login
+    const { data: clientRow } = await sb
+      .from('clients').select('id').eq('email', user.email).limit(1);
+
+    if (!clientRow || clientRow.length === 0) {
+      document.getElementById('dashAppCount').textContent  = '0';
+      document.getElementById('dashLoanCount').textContent = '0';
+      document.getElementById('dashAppBadge').textContent  = 'Nenhum pedido ainda';
+      document.getElementById('dashLoanBadge').textContent = 'Nenhum empréstimo';
+      return;
+    }
+
+    const clientId = clientRow[0].id;
+
+    // Link auth_user_id if not already set
+    await sb.from('clients').update({ auth_user_id: user.id }).eq('id', clientId);
+
+    // Fetch applications
+    const { data: apps } = await sb
+      .from('loan_applications').select('status,amount,loan_type,created_at')
+      .eq('client_id', clientId).order('created_at', { ascending: false });
+
+    const appCount = apps ? apps.length : 0;
+    document.getElementById('dashAppCount').textContent = appCount;
+
+    if (appCount === 0) {
+      document.getElementById('dashAppBadge').className = 'dc-badge badge-none';
+      document.getElementById('dashAppBadge').textContent = 'Nenhum pedido ainda';
+    } else {
+      const latest = apps[0];
+      const statusLabel = { pending:'⏳ Pendente', review:'🔍 Em análise', approved:'✅ Aprovado', rejected:'✗ Rejeitado' };
+      const badgeCls    = { pending:'badge-pending', review:'badge-pending', approved:'badge-approved', rejected:'badge-none' };
+      document.getElementById('dashAppBadge').className = 'dc-badge ' + (badgeCls[latest.status] || 'badge-none');
+      document.getElementById('dashAppBadge').textContent = statusLabel[latest.status] || latest.status;
+    }
+
+    // Fetch loans
+    const { data: lns } = await sb
+      .from('loans').select('status,principal,monthly_payment,amount_remaining,contract_no,loan_type')
+      .eq('client_id', clientId).eq('status', 'active');
+
+    const loanCount = lns ? lns.length : 0;
+    document.getElementById('dashLoanCount').textContent = loanCount;
+
+    if (loanCount === 0) {
+      document.getElementById('dashLoanBadge').className = 'dc-badge badge-none';
+      document.getElementById('dashLoanBadge').textContent = 'Nenhum ativo';
+    } else {
+      const totalRemaining = lns.reduce((s, l) => s + Number(l.amount_remaining), 0);
+      document.getElementById('dashLoanBadge').className = 'dc-badge badge-approved';
+      document.getElementById('dashLoanBadge').textContent = '€' + totalRemaining.toLocaleString('pt-PT') + ' em dívida';
+
+      // Render loan details
+      const typeMap = { personal:'Pessoal', mortgage:'Habitação', car:'Automóvel', consolidation:'Consolidação' };
+      const detail  = document.getElementById('dashLoansDetail');
+      detail.innerHTML = lns.map(l => `
+        <div style="background:#F4F7FB;border-radius:10px;padding:14px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:0.82rem;font-weight:700;color:#0A1929;">${typeMap[l.loan_type]||l.loan_type} — #${l.contract_no}</span>
+            <span style="font-size:0.78rem;font-weight:700;color:#2E7D32;">● Ativo</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:#5E7A9A;">
+            <span>Prestação: <strong style="color:#003F8C;">€${Number(l.monthly_payment).toLocaleString('pt-PT')}/mês</strong></span>
+            <span>Restante: <strong style="color:#003F8C;">€${Number(l.amount_remaining).toLocaleString('pt-PT')}</strong></span>
+          </div>
+        </div>`).join('');
+    }
+  }
+
+  // ── Password recovery: set a new password ──
+  async function handleSetNewPassword() {
+    const pass  = document.getElementById('newPass').value;
+    const pass2 = document.getElementById('newPass2').value;
+    if (pass.length < 8) { showAlert('A nova palavra-passe deve ter pelo menos 8 caracteres.', 'error'); return; }
+    if (pass !== pass2)  { showAlert('As palavras-passe não coincidem.', 'error'); return; }
+    setBtnLoading('btnSetNewPass', true, '');
+    const { error } = await sb.auth.updateUser({ password: pass });
+    setBtnLoading('btnSetNewPass', false, 'Guardar Nova Palavra-passe');
+    if (error) { showAlert(error.message, 'error'); return; }
+    showAlert('✅ Palavra-passe atualizada com sucesso! Pode agora usar a nova palavra-passe.', 'success');
+    document.getElementById('recoveryPanel').style.display = 'none';
+    document.getElementById('authPanel').style.display = 'block';
+  }
+  window.handleSetNewPassword = handleSetNewPassword;
+
+  // ── On page load — check if already logged in / handle recovery link ──
+  (async function () {
+    // Supabase Auth appends #access_token=...&type=recovery to the URL
+    // when the user clicks the "reset password" email link.
+    const isRecovery = window.location.hash.includes('type=recovery');
+    const { data: { session } } = await sb.auth.getSession();
+    if (session && session.user && isRecovery) {
+      document.getElementById('authPanel').style.display = 'none';
+      const panel = document.getElementById('recoveryPanel');
+      if (panel) panel.style.display = 'block';
+      showAlert('🔑 Defina a sua nova palavra-passe.', 'info');
+      return;
+    }
+    if (session && session.user) {
+      await showDashboard(session.user);
+    }
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,2066 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin | Creditxa Backoffice</title>
+  <!-- ✅ Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL      = 'https://yatxtgfvwevvehnfoiql.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhdHh0Z2Z2d2V2dmVobmZvaXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNDQ4NTEsImV4cCI6MjA5NTYyMDg1MX0.A_cKC5fbBIUK9Ne8fAhQa2tf4B--19STcZZqzvFfFrk';
+    // Expose globally so all script blocks can access it
+    window._supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const _supabase = window._supabase;
+  </script>
+
+  <link rel="icon" type="image/png" href="../assets/images/favicon-32.png" />
+  <style>
+    /* ── Reset & Variables ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #003F8C;
+      --primary-dark: #001836;
+      --accent: #00BFFF;
+      --accent2: #0093E8;
+      --danger: #E53935;
+      --warning: #F57C00;
+      --success: #2E7D32;
+      --info: #0277BD;
+      --white: #FFFFFF;
+      --off-white: #F4F7FB;
+      --border: #E2E8F0;
+      --text-dark: #0D1B2A;
+      --text-mid: #4A5568;
+      --text-light: #90A0B7;
+      --sidebar-w: 260px;
+      --header-h: 64px;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 2px 16px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --transition: 0.2s ease;
+    }
+    body { font-family: var(--font); background: var(--off-white); color: var(--text-dark); display: flex; min-height: 100vh; overflow-x: hidden; }
+
+    /* ── Login Gate ── */
+    #loginGate {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, #0066CC 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #loginGate::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .gate-card {
+      background: white; border-radius: 20px; padding: 48px 44px; width: 100%; max-width: 420px;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.35); position: relative; z-index: 1;
+      animation: fadeUp 0.5s ease both;
+    }
+    @keyframes fadeUp { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform: translateY(0); } }
+    .gate-logo { text-align: center; margin-bottom: 8px; }
+    .gate-logo .logo-mark { width: 52px; height: 52px; background: var(--primary); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 900; color: var(--accent); font-family: Arial; margin-bottom: 10px; }
+    .gate-logo h1 { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+    .gate-logo h1 span { color: var(--accent); }
+    .gate-logo p { font-size: 0.82rem; color: var(--text-light); margin-top: 4px; }
+    .gate-badge { background: #FFF3E0; color: #E65100; font-size: 0.75rem; font-weight: 700; padding: 6px 14px; border-radius: 100px; display: inline-block; margin: 16px 0 24px; letter-spacing: 0.05em; border: 1px solid #FFE0B2; }
+    .gate-label { font-size: 0.78rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: block; }
+    .gate-input { width: 100%; padding: 13px 16px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-size: 0.95rem; color: var(--text-dark); background: var(--off-white); outline: none; transition: var(--transition); margin-bottom: 16px; }
+    .gate-input:focus { border-color: var(--accent); background: white; }
+    .gate-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); font-size: 1rem; font-weight: 700; cursor: pointer; transition: var(--transition); }
+    .gate-btn:hover { background: var(--accent2); }
+    .gate-error { display: none; background: #FFEBEE; color: var(--danger); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.85rem; margin-top: 12px; text-align: center; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-w); min-height: 100vh; background: var(--primary-dark);
+      display: flex; flex-direction: column; position: fixed; left: 0; top: 0; bottom: 0;
+      z-index: 100; transition: transform var(--transition);
+    }
+    .sidebar-logo { padding: 20px 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .sidebar-logo .mark { width: 36px; height: 36px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1rem; color: var(--primary-dark); }
+    .sidebar-logo .name { font-size: 1.2rem; font-weight: 800; color: white; letter-spacing: -0.02em; }
+    .sidebar-logo .name span { color: var(--accent); }
+    .sidebar-logo .badge { font-size: 0.62rem; font-weight: 700; background: #E53935; color: white; padding: 2px 7px; border-radius: 100px; margin-left: 6px; }
+
+    .nav-section { padding: 20px 14px 8px; font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.12em; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); color: rgba(255,255,255,0.6); font-size: 0.88rem; font-weight: 500; margin: 1px 8px; }
+    .nav-item svg { flex-shrink: 0; }
+    .nav-item:hover { background: rgba(255,255,255,0.07); color: white; }
+    .nav-item.active { background: rgba(0,191,255,0.15); color: var(--accent); font-weight: 600; }
+    .nav-item .badge { margin-left: auto; background: var(--danger); color: white; font-size: 0.68rem; font-weight: 700; padding: 1px 7px; border-radius: 100px; }
+    .sidebar-footer { margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+    .admin-avatar { display: flex; align-items: center; gap: 10px; }
+    .avatar-circle { width: 36px; height: 36px; background: linear-gradient(135deg,var(--accent),var(--accent2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; color: var(--primary-dark); flex-shrink: 0; }
+    .avatar-info { flex: 1; min-width: 0; }
+    .avatar-name { font-size: 0.85rem; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .avatar-role { font-size: 0.72rem; color: rgba(255,255,255,0.4); }
+    .logout-btn { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 6px; border-radius: 6px; transition: var(--transition); }
+    .logout-btn:hover { color: var(--danger); background: rgba(229,57,53,0.1); }
+
+    /* ── Main Content ── */
+    #main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── Top Bar ── */
+    .topbar { height: var(--header-h); background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 28px; gap: 16px; position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow); }
+    .topbar-title { flex: 1; font-size: 1.1rem; font-weight: 700; color: var(--text-dark); }
+    .topbar-time { font-size: 0.8rem; color: var(--text-light); background: var(--off-white); padding: 6px 12px; border-radius: 100px; border: 1px solid var(--border); }
+    .topbar-actions { display: flex; align-items: center; gap: 10px; }
+    .icon-btn { width: 36px; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); color: var(--text-mid); position: relative; }
+    .icon-btn:hover { background: var(--off-white); border-color: var(--accent); color: var(--primary); }
+    .icon-btn .dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; border: 2px solid white; }
+    .status-pill { display: flex; align-items: center; gap: 6px; background: #E8F5E9; color: var(--success); font-size: 0.78rem; font-weight: 700; padding: 6px 12px; border-radius: 100px; }
+    .status-pill .dot2 { width: 8px; height: 8px; background: var(--success); border-radius: 50%; animation: pulse2 2s infinite; }
+    @keyframes pulse2 { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    /* ── Page Content ── */
+    .page-content { padding: 28px; flex: 1; }
+    .page-content > .section { display: none; }
+    .page-content > .section.active { display: block; }
+
+    /* ── Stats Grid ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: white; border-radius: var(--radius); padding: 22px 24px; border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; align-items: center; gap: 18px; transition: var(--transition); }
+    .stat-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .stat-icon { width: 52px; height: 52px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.3rem; }
+    .stat-icon.blue { background: #E3F0FF; }
+    .stat-icon.green { background: #E8F5E9; }
+    .stat-icon.orange { background: #FFF3E0; }
+    .stat-icon.red { background: #FFEBEE; }
+    .stat-icon.purple { background: #F3E5F5; }
+    .stat-body { flex: 1; min-width: 0; }
+    .stat-num { font-size: 1.65rem; font-weight: 800; color: var(--text-dark); line-height: 1; }
+    .stat-label { font-size: 0.78rem; color: var(--text-light); font-weight: 500; margin-top: 4px; }
+    .stat-change { font-size: 0.75rem; font-weight: 600; margin-top: 6px; }
+    .stat-change.up { color: var(--success); }
+    .stat-change.down { color: var(--danger); }
+
+    /* ── Cards ── */
+    .card { background: white; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; }
+    .card-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); }
+    .card-body { padding: 0; }
+    .card-footer { padding: 14px 24px; border-top: 1px solid var(--border); background: var(--off-white); }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    thead tr { background: var(--off-white); }
+    thead th { padding: 13px 18px; text-align: left; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-light); white-space: nowrap; border-bottom: 1px solid var(--border); }
+    tbody tr { border-bottom: 1px solid var(--border); transition: var(--transition); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #F8FBFF; }
+    tbody td { padding: 14px 18px; color: var(--text-mid); vertical-align: middle; }
+    .td-name { font-weight: 600; color: var(--text-dark); }
+    .td-mono { font-family: monospace; font-size: 0.82rem; }
+
+    /* ── Badges ── */
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .badge.pending { background: #FFF3E0; color: #E65100; }
+    .badge.approved { background: #E8F5E9; color: var(--success); }
+    .badge.rejected { background: #FFEBEE; color: var(--danger); }
+    .badge.review { background: #E3F0FF; color: var(--primary); }
+    .badge.active { background: #E8F5E9; color: var(--success); }
+    .badge.inactive { background: var(--off-white); color: var(--text-light); }
+    .badge.overdue { background: #FFEBEE; color: var(--danger); }
+    .badge.paid { background: #E8F5E9; color: var(--success); }
+    .badge.info { background: #E3F0FF; color: var(--info); }
+
+    /* ── Action Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 600; cursor: pointer; border: none; transition: var(--transition); text-decoration: none; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #C62828; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #1B5E20; }
+    .btn-ghost { background: var(--off-white); color: var(--text-mid); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--border); }
+    .btn-sm { padding: 5px 10px; font-size: 0.76rem; }
+    .btn-icon { width: 30px; height: 30px; padding: 0; border-radius: 6px; justify-content: center; }
+
+    /* ── Search / Filter Bar ── */
+    .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-wrap input { width: 100%; padding: 9px 14px 9px 36px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.85rem; outline: none; background: white; color: var(--text-dark); transition: var(--transition); }
+    .search-wrap input:focus { border-color: var(--accent); }
+    .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+    .filter-select { padding: 9px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.85rem; outline: none; background: white; color: var(--text-mid); cursor: pointer; }
+    .filter-select:focus { border-color: var(--accent); }
+
+    /* ── Dashboard Grid Layout ── */
+    .dash-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; margin-bottom: 20px; }
+    .dash-grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-bottom: 20px; }
+    @media (max-width:1100px) { .dash-grid { grid-template-columns: 1fr; } .dash-grid-3 { grid-template-columns: 1fr; } }
+
+    /* ── Mini Chart Bar ── */
+    .mini-bars { display: flex; align-items: flex-end; gap: 4px; height: 48px; }
+    .mini-bar { flex: 1; border-radius: 3px 3px 0 0; background: linear-gradient(to top, var(--primary), var(--accent)); opacity: 0.7; transition: opacity 0.2s; }
+    .mini-bar:hover { opacity: 1; }
+    .chart-area { padding: 20px 24px; }
+
+    /* ── Activity Feed ── */
+    .activity-feed { padding: 8px 0; }
+    .activity-item { display: flex; align-items: flex-start; gap: 14px; padding: 14px 24px; border-bottom: 1px solid var(--border); }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .activity-dot.green { background: var(--success); }
+    .activity-dot.blue { background: var(--accent2); }
+    .activity-dot.orange { background: var(--warning); }
+    .activity-dot.red { background: var(--danger); }
+    .activity-text { font-size: 0.84rem; color: var(--text-mid); line-height: 1.45; }
+    .activity-text strong { color: var(--text-dark); }
+    .activity-time { font-size: 0.72rem; color: var(--text-light); margin-top: 3px; }
+
+    /* ── Form Elements ── */
+    .form-group { margin-bottom: 18px; }
+    .form-label { font-size: 0.78rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: block; }
+    .form-input { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem; color: var(--text-dark); background: white; outline: none; transition: var(--transition); }
+    .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,191,255,0.1); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* ── Modal ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: var(--radius); box-shadow: var(--shadow-lg); width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; animation: fadeUp 0.25s ease; }
+    .modal-header { padding: 22px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .modal-title { font-size: 1rem; font-weight: 700; }
+    .modal-close { background: none; border: none; cursor: pointer; color: var(--text-light); font-size: 1.2rem; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+    .modal-close:hover { background: var(--off-white); color: var(--danger); }
+    .modal-body { padding: 24px; }
+    .modal-footer { padding: 18px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--off-white); }
+
+    /* ── Toast ── */
+    #adminToast { position: fixed; bottom: 24px; right: 24px; background: var(--text-dark); color: white; padding: 14px 20px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; box-shadow: var(--shadow-lg); z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.35s ease; max-width: 340px; }
+    #adminToast.show { transform: translateY(0); opacity: 1; }
+    #adminToast.success { border-left: 4px solid var(--success); }
+    #adminToast.error { border-left: 4px solid var(--danger); }
+    #adminToast.info { border-left: 4px solid var(--accent); }
+
+    /* ── Settings ── */
+    .settings-section { margin-bottom: 28px; }
+    .settings-section h3 { font-size: 0.9rem; font-weight: 700; color: var(--text-dark); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-info { flex: 1; }
+    .setting-name { font-size: 0.88rem; font-weight: 600; color: var(--text-dark); }
+    .setting-desc { font-size: 0.78rem; color: var(--text-light); margin-top: 2px; }
+    .toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 100px; cursor: pointer; transition: var(--transition); }
+    .toggle-slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: var(--transition); }
+    .toggle input:checked + .toggle-slider { background: var(--success); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      #sidebar { transform: translateX(-100%); }
+      #sidebar.open { transform: translateX(0); }
+      #main { margin-left: 0; }
+      .mobile-toggle { display: flex !important; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .mobile-toggle { display: none; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: white; align-items: center; justify-content: center; cursor: pointer; color: var(--text-mid); }
+
+    /* ── Progress Bar ── */
+    .progress-bar { height: 6px; background: var(--border); border-radius: 100px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 1s ease; }
+
+    /* ── Page heading ── */
+    .page-heading { margin-bottom: 24px; }
+    .page-heading h2 { font-size: 1.5rem; font-weight: 800; color: var(--text-dark); }
+    .page-heading p { font-size: 0.85rem; color: var(--text-light); margin-top: 4px; }
+
+    /* ── Tabs ── */
+    .tab-group { display: flex; gap: 2px; background: var(--off-white); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 20px; width: fit-content; }
+    .tab-btn { padding: 8px 18px; border-radius: 6px; font-size: 0.83rem; font-weight: 600; border: none; background: none; cursor: pointer; color: var(--text-light); transition: var(--transition); }
+    .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+    /* ── Loan Detail ── */
+    .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .detail-item { background: var(--off-white); border-radius: var(--radius-sm); padding: 16px; }
+    .detail-item .label { font-size: 0.72rem; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+    .detail-item .value { font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin-top: 4px; }
+
+    .scrollable-table { max-height: 520px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     LOGIN GATE
+═══════════════════════════════════════════════ -->
+<div id="loginGate">
+  <div class="gate-card">
+    <div class="gate-logo">
+      <img src="../assets/images/creditxa-logo.png" alt="Creditxa" style="height:42px;margin:0 auto 14px;display:block;" />
+      <p>Painel de Administração</p>
+    </div>
+    <div style="text-align:center;">
+      <span class="gate-badge">🔐 ACESSO RESTRITO — ADMIN ONLY</span>
+    </div>
+    <label class="gate-label">Email de Administrador</label>
+    <input class="gate-input" type="email" id="gEmail" placeholder="admin@creditxa.pt" />
+    <label class="gate-label">Palavra-passe</label>
+    <input class="gate-input" type="password" id="gPass" placeholder="••••••••" />
+    <button class="gate-btn" id="gateSubmitBtn" onclick="doAdminLogin()">Aceder ao Painel →</button>
+    <div class="gate-error" id="gateError">❌ Credenciais incorretas. Tente novamente.</div>
+    <p style="margin-top:18px;text-align:center;font-size:0.76rem;color:var(--text-light);">Acesso reservado a administradores autorizados. Contacte o administrador principal para obter uma conta.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════ -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <img src="../assets/images/creditxa-logo.png" alt="Creditxa" style="height:26px;" />
+    <span class="badge">ADMIN</span>
+  </div>
+
+  <div class="nav-section">Principal</div>
+  <div class="nav-item active" onclick="showSection('dashboard', this)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </div>
+  <div class="nav-item" onclick="showSection('applications', this)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Pedidos de Crédito
+    <span class="badge" id="sidebarPendingBadge">12</span>
+  </div>
+  <div class="nav-item" onclick="showSection('clients', this)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Clientes
+  </div>
+  <div class="nav-item" onclick="showSection('loans', this)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Empréstimos Ativos
+  </div>
+  <div class="nav-item" onclick="showSection('payments', this)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    Pagamentos
+  </div>
+
+  <div class="nav-section">Comunicação</div>
+  <div class="nav-item" onclick="showSection('messages', this)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Mensagens
+    <span class="badge" id="sidebarMessagesBadge" style="display:none;">0</span>
+  </div>
+  <div class="nav-item" onclick="showSection('newsletter', this)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    Newsletter
+  </div>
+
+  <div class="nav-section">Sistema</div>
+  <div class="nav-item" onclick="showSection('activity', this)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    Atividade
+  </div>
+  <div class="nav-item" onclick="showSection('settings', this)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Definições
+  </div>
+  <div class="nav-item" onclick="showSection('reports', this)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Relatórios
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="admin-avatar">
+      <div class="avatar-circle">A</div>
+      <div class="avatar-info">
+        <div class="avatar-name" id="sidebarName">Administrador</div>
+        <div class="avatar-role">Super Admin</div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()" title="Terminar sessão">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════ -->
+<div id="main">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <button class="mobile-toggle" id="mobileToggle">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    <div class="topbar-actions">
+      <div class="status-pill"><div class="dot2"></div>Sistema Online</div>
+      <div class="topbar-time" id="clockDisplay">--:--:--</div>
+      <div class="icon-btn" onclick="showSection('messages', document.querySelector('[onclick*=messages]'))">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <div class="dot"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+
+  <!-- Page Content -->
+  <div class="page-content">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="section active" id="s-dashboard">
+      <div class="page-heading">
+        <h2>📊 Dashboard</h2>
+        <p>Resumo geral da plataforma Creditxa — atualizado em tempo real.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">💶</div>
+          <div class="stat-body">
+            <div class="stat-num">€4.2M</div>
+            <div class="stat-label">Volume Total Emprestado</div>
+            <div class="stat-change up">↑ +18% vs. mês anterior</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-body">
+            <div class="stat-num">1,284</div>
+            <div class="stat-label">Clientes Ativos</div>
+            <div class="stat-change up">↑ +5.2% este mês</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">⏳</div>
+          <div class="stat-body">
+            <div class="stat-num" id="pendingCount">12</div>
+            <div class="stat-label">Pedidos Pendentes</div>
+            <div class="stat-change down">↑ 3 novos hoje</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">⚠️</div>
+          <div class="stat-body">
+            <div class="stat-num">4</div>
+            <div class="stat-label">Em Incumprimento</div>
+            <div class="stat-change down">↓ -1 vs. semana passada</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">💳</div>
+          <div class="stat-body">
+            <div class="stat-num">€187K</div>
+            <div class="stat-label">Recebido este Mês</div>
+            <div class="stat-change up">↑ +11% vs. mês anterior</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <!-- Chart Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📈 Volume de Empréstimos — Últimos 8 meses</div>
+          </div>
+          <div class="chart-area">
+            <div style="display:flex;align-items:flex-end;gap:8px;height:120px;margin-bottom:8px;" id="chartBars"></div>
+            <div style="display:flex;gap:8px;font-size:0.7rem;color:var(--text-light);" id="chartLabels"></div>
+          </div>
+          <div class="card-footer" style="display:flex;gap:24px;">
+            <div><div style="font-size:0.72rem;color:var(--text-light);">Aprovação</div><div style="font-weight:700;color:var(--success);">78.4%</div></div>
+            <div><div style="font-size:0.72rem;color:var(--text-light);">Tempo médio</div><div style="font-weight:700;color:var(--primary);">18h</div></div>
+            <div><div style="font-size:0.72rem;color:var(--text-light);">Ticket médio</div><div style="font-weight:700;color:var(--primary);">€8.200</div></div>
+          </div>
+        </div>
+
+        <!-- Activity -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🕐 Atividade Recente</div>
+          </div>
+          <div class="activity-feed" id="recentActivityList">
+            <div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">A carregar atividade recente…</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><div class="card-title">⚡ Ações Rápidas</div></div>
+        <div style="padding:20px;display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="openModal('modalNewLoan')">➕ Novo Pedido Manual</button>
+          <button class="btn btn-success" onclick="showSection('applications', document.querySelector('[onclick*=applications]'))">✅ Rever Pedidos Pendentes</button>
+          <button class="btn btn-ghost" onclick="showSection('reports', document.querySelector('[onclick*=reports]'))">📋 Exportar Relatório</button>
+          <button class="btn btn-ghost" onclick="adminToast('Email de alerta enviado a todos os clientes em atraso!','success')">📧 Alertas de Atraso</button>
+          <button class="btn btn-ghost" onclick="openModal('modalNewClient')">👤 Adicionar Cliente</button>
+        </div>
+      </div>
+
+      <!-- Products progress -->
+      <div class="dash-grid-3">
+        <div class="card">
+          <div class="card-header"><div class="card-title">💳 Pessoal</div></div>
+          <div style="padding:16px 24px;">
+            <div style="font-size:1.4rem;font-weight:800;color:var(--primary);margin-bottom:4px;">€1.8M</div>
+            <div style="font-size:0.78rem;color:var(--text-light);margin-bottom:12px;">642 contratos ativos</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:62%"></div></div>
+            <div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">62% do limite mensal</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🏠 Habitação</div></div>
+          <div style="padding:16px 24px;">
+            <div style="font-size:1.4rem;font-weight:800;color:var(--primary);margin-bottom:4px;">€1.9M</div>
+            <div style="font-size:0.78rem;color:var(--text-light);margin-bottom:12px;">98 contratos ativos</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:78%"></div></div>
+            <div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">78% do limite mensal</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🚗 Automóvel</div></div>
+          <div style="padding:16px 24px;">
+            <div style="font-size:1.4rem;font-weight:800;color:var(--primary);margin-bottom:4px;">€0.5M</div>
+            <div style="font-size:0.78rem;color:var(--text-light);margin-bottom:12px;">244 contratos ativos</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:41%"></div></div>
+            <div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">41% do limite mensal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ APPLICATIONS ═══ -->
+    <div class="section" id="s-applications">
+      <div class="page-heading">
+        <h2>📄 Pedidos de Crédito</h2>
+        <p>Gerir e processar todas as candidaturas recebidas.</p>
+      </div>
+
+      <div class="tab-group">
+        <button class="tab-btn active" onclick="filterApps('all',this)">Todos (47)</button>
+        <button class="tab-btn" onclick="filterApps('pending',this)">Pendentes (12)</button>
+        <button class="tab-btn" onclick="filterApps('review',this)">Em Análise (8)</button>
+        <button class="tab-btn" onclick="filterApps('approved',this)">Aprovados (23)</button>
+        <button class="tab-btn" onclick="filterApps('rejected',this)">Rejeitados (4)</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Lista de Candidaturas</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modalNewLoan')">➕ Novo</button>
+        </div>
+        <div class="filter-bar" style="padding:14px 24px 0;">
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" placeholder="Pesquisar por nome, NIF ou nº pedido..." oninput="filterTable('appTable',this.value)" />
+          </div>
+          <select class="filter-select" id="typeFilter" onchange="filterTable('appTable','')">
+            <option value="">Todos os tipos</option>
+            <option>Pessoal</option><option>Habitação</option><option>Automóvel</option><option>Consolidação</option>
+          </select>
+          <select class="filter-select" id="statusFilter" onchange="filterTable('appTable','')">
+            <option value="">Todos os estados</option>
+            <option>Pendente</option><option>Em Análise</option><option>Aprovado</option><option>Rejeitado</option>
+          </select>
+        </div>
+        <div class="card-body table-wrap scrollable-table">
+          <table id="appTable">
+            <thead><tr>
+              <th>Nº Pedido</th><th>Cliente</th><th>NIF</th><th>Tipo</th><th>Montante</th><th>Prazo</th><th>Data</th><th>Estado</th><th>Ações</th>
+            </tr></thead>
+            <tbody>
+              <tr><td colspan="9" style="text-align:center;color:var(--text-light);padding:28px;">A carregar pedidos…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CLIENTS ═══ -->
+    <div class="section" id="s-clients">
+      <div class="page-heading">
+        <h2>👥 Clientes</h2>
+        <p>Gestão completa da base de clientes Creditxa.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Base de Clientes</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modalNewClient')">➕ Novo Cliente</button>
+        </div>
+        <div class="filter-bar" style="padding:14px 24px 0;">
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" placeholder="Pesquisar clientes..." oninput="filterTable('clientTable',this.value)" />
+          </div>
+          <select class="filter-select">
+            <option>Todos os estados</option>
+            <option>Ativo</option><option>Inativo</option><option>Bloqueado</option>
+          </select>
+        </div>
+        <div class="card-body table-wrap scrollable-table">
+          <table id="clientTable">
+            <thead><tr>
+              <th>ID</th><th>Nome</th><th>Email</th><th>NIF</th><th>Telefone</th><th>Registado em</th><th>Empréstimos</th><th>Estado</th><th>Ações</th>
+            </tr></thead>
+            <tbody>
+              <tr><td colspan="9" style="text-align:center;color:var(--text-light);padding:28px;">A carregar clientes…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer" style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.8rem;color:var(--text-light);">1.284 clientes registados</span>
+          <button class="btn btn-ghost btn-sm" onclick="adminToast('Exportando lista de clientes CSV...','info')">📥 Exportar CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ LOANS ═══ -->
+    <div class="section" id="s-loans">
+      <div class="page-heading">
+        <h2>💰 Empréstimos Ativos</h2>
+        <p>Monitorização de todos os contratos de crédito em vigor.</p>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Contratos Ativos</div></div>
+        <div class="filter-bar" style="padding:14px 24px 0;">
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" placeholder="Pesquisar contrato ou cliente..." oninput="filterTable('loansTable',this.value)" />
+          </div>
+          <select class="filter-select"><option>Todos os tipos</option><option>Pessoal</option><option>Habitação</option><option>Automóvel</option></select>
+        </div>
+        <div class="card-body table-wrap scrollable-table">
+          <table id="loansTable">
+            <thead><tr>
+              <th>Contrato</th><th>Cliente</th><th>Tipo</th><th>Capital</th><th>Prestação/mês</th><th>TAN</th><th>Pago</th><th>Restante</th><th>Estado</th><th>Ações</th>
+            </tr></thead>
+            <tbody>
+              <tr><td colspan="10" style="text-align:center;color:var(--text-light);padding:28px;">A carregar contratos…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PAYMENTS ═══ -->
+    <div class="section" id="s-payments">
+      <div class="page-heading">
+        <h2>💳 Pagamentos</h2>
+        <p>Registo de todas as transações e prestações.</p>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card"><div class="stat-icon green">💶</div><div class="stat-body"><div class="stat-num" id="statReceivedMonth">—</div><div class="stat-label">Recebido este mês</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange">⏳</div><div class="stat-body"><div class="stat-num" id="statOverdue">—</div><div class="stat-label">Em atraso (contratos)</div></div></div>
+        <div class="stat-card"><div class="stat-icon blue">📅</div><div class="stat-body"><div class="stat-num" id="statMonthlyDue">—</div><div class="stat-label">Prestações mensais previstas</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Histórico de Pagamentos</div></div>
+        <div class="card-body table-wrap scrollable-table">
+          <table>
+            <thead><tr><th>Ref.</th><th>Cliente</th><th>Contrato</th><th>Montante</th><th>Método</th><th>Data</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td colspan="7" style="text-align:center;color:var(--text-light);padding:28px;">A carregar pagamentos…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer" style="display:flex;justify-content:flex-end;gap:10px;">
+          <button class="btn btn-ghost btn-sm" onclick="adminToast('Exportando pagamentos...','info')">📥 Exportar</button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modalManualPayment');loadLoansForPaymentModal()">➕ Registar Pagamento</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ MESSAGES ═══ -->
+    <div class="section" id="s-messages">
+      <div class="page-heading">
+        <h2>💬 Mensagens</h2>
+        <p>Contactos e pedidos de suporte recebidos do website.</p>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Caixa de Entrada</div></div>
+        <div class="card-body table-wrap">
+          <table>
+            <thead><tr><th>De</th><th>Assunto</th><th>Mensagem</th><th>Data</th><th>Estado</th><th>Ação</th></tr></thead>
+            <tbody>
+              <tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:28px;">A carregar mensagens…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ NEWSLETTER ═══ -->
+    <div class="section" id="s-newsletter">
+      <div class="page-heading">
+        <h2>📧 Newsletter</h2>
+        <p>Gerir subscritores e enviar campanhas.</p>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card"><div class="stat-icon blue">📧</div><div class="stat-body"><div class="stat-num">—</div><div class="stat-label">Subscritores Totais</div></div></div>
+        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-body"><div class="stat-num">—</div><div class="stat-label">Taxa de Abertura (em breve)</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange">📤</div><div class="stat-body"><div class="stat-num">—</div><div class="stat-label">Campanhas Enviadas (em breve)</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Enviar Campanha</div>
+        </div>
+        <div style="padding:24px;">
+          <div class="form-group">
+            <label class="form-label">Assunto do Email</label>
+            <input class="form-input" type="text" placeholder="Ex: Novas taxas a partir de Junho — Creditxa" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Segmento</label>
+            <select class="form-input">
+              <option>Todos os subscritores (3.842)</option>
+              <option>Clientes ativos (1.284)</option>
+              <option>Pedidos recentes (90 dias)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Corpo da mensagem</label>
+            <textarea class="form-input" rows="6" placeholder="Escreva aqui o conteúdo do email..."></textarea>
+          </div>
+          <div style="display:flex;gap:12px;">
+            <button class="btn btn-primary" onclick="adminToast('Campanha enviada com sucesso para 3.842 subscritores!','success')">📤 Enviar Agora</button>
+            <button class="btn btn-ghost" onclick="adminToast('Rascunho guardado.','info')">💾 Guardar Rascunho</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:20px;">
+        <div class="card-header"><div class="card-title">Subscritores Recentes</div></div>
+        <div class="card-body table-wrap">
+          <table id="newsletterTable">
+            <thead><tr><th>Email</th><th>Data</th><th>Fonte</th><th>Ação</th></tr></thead>
+            <tbody>
+              <tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:28px;">A carregar subscritores…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ATIVIDADE ═══ -->
+    <div class="section" id="s-activity">
+      <div class="page-heading">
+        <h2>📶 Atividade</h2>
+        <p>Ações de administração e atividade de contas de clientes (registo, verificação de email, login, logout).</p>
+      </div>
+      <div class="card">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="card-title">Registo de Atividade</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select class="filter-select" id="activityFilter" onchange="loadActivityTable()">
+              <option value="">Todos os tipos</option>
+              <option value="admin">Apenas Admin</option>
+              <option value="client">Apenas Clientes</option>
+              <option value="system">Apenas Sistema</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="loadActivityTable()">🔄 Atualizar</button>
+          </div>
+        </div>
+        <div class="card-body table-wrap scrollable-table">
+          <table id="activityTable">
+            <thead><tr><th>Quando</th><th>Tipo</th><th>Quem</th><th>Ação</th><th>Detalhes</th></tr></thead>
+            <tbody>
+              <tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:28px;">A carregar atividade…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SETTINGS ═══ -->
+    <div class="section" id="s-settings">
+      <div class="page-heading">
+        <h2>⚙️ Definições</h2>
+        <p>Configurar parâmetros da plataforma e integrações.</p>
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><div class="card-title">Parâmetros de Crédito</div></div>
+        <div style="padding:24px;">
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">TAN Mínima — Pessoal (%)</label><input class="form-input" type="number" id="set_tan_min_personal" value="7.99" step="0.01" /></div>
+            <div class="form-group"><label class="form-label">TAN Mínima — Habitação (%)</label><input class="form-input" type="number" id="set_tan_min_mortgage" value="3.09" step="0.01" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">TAN Mínima — Automóvel (%)</label><input class="form-input" type="number" id="set_tan_min_car" value="5.99" step="0.01" /></div>
+            <div class="form-group"><label class="form-label">Taxa de Esforço Máxima (%)</label><input class="form-input" type="number" id="set_max_dsr" value="35" step="1" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Prazo Máximo — Pessoal (meses)</label><input class="form-input" type="number" id="set_max_term_personal" value="84" /></div>
+            <div class="form-group"><label class="form-label">Prazo Máximo — Habitação (meses)</label><input class="form-input" type="number" id="set_max_term_mortgage" value="360" /></div>
+          </div>
+          <button class="btn btn-primary" onclick="saveSettings()">💾 Guardar Alterações</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><div class="card-title">Configurações do Sistema</div></div>
+        <div style="padding:0 24px;">
+          <div class="settings-section">
+            <h3>Notificações</h3>
+            <div class="setting-row"><div class="setting-info"><div class="setting-name">Email para novos pedidos</div><div class="setting-desc">Receber email quando chega um novo pedido de crédito</div></div><label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><div class="setting-info"><div class="setting-name">Alertas de pagamentos em atraso</div><div class="setting-desc">Notificar quando um cliente está em atraso</div></div><label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><div class="setting-info"><div class="setting-name">Relatório semanal automático</div><div class="setting-desc">Enviar resumo semanal todas as segundas-feiras</div></div><label class="toggle"><input type="checkbox" /><span class="toggle-slider"></span></label></div>
+          </div>
+          <div class="settings-section">
+            <h3>Segurança</h3>
+            <div class="setting-row"><div class="setting-info"><div class="setting-name">Autenticação de dois fatores (2FA)</div><div class="setting-desc">Exigir 2FA para aceder ao painel</div></div><label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><div class="setting-info"><div class="setting-name">Log de acessos</div><div class="setting-desc">Registar todos os acessos ao painel admin</div></div><label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><div class="setting-info"><div class="setting-name">Sessão expira após 30 min inatividade</div><div class="setting-desc">Fechar sessão automaticamente por segurança</div></div><label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Alterar Credenciais Admin</div></div>
+        <div style="padding:24px;">
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Novo Email Admin</label><input class="form-input" type="email" placeholder="admin@creditxa.pt" /></div>
+            <div class="form-group"><label class="form-label">Nova Palavra-passe</label><input class="form-input" type="password" placeholder="••••••••" /></div>
+          </div>
+          <button class="btn btn-primary" onclick="adminToast('Credenciais atualizadas com sucesso!','success')">🔐 Atualizar Credenciais</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ REPORTS ═══ -->
+    <div class="section" id="s-reports">
+      <div class="page-heading">
+        <h2>📋 Relatórios</h2>
+        <p>Exportar dados e gerar relatórios detalhados.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
+        <div class="card"><div style="padding:24px;text-align:center;"><div style="font-size:2.5rem;margin-bottom:12px;">📊</div><div style="font-weight:700;margin-bottom:6px;">Relatório Mensal</div><div style="font-size:0.82rem;color:var(--text-light);margin-bottom:16px;">Resumo completo de Maio 2024</div><button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="adminToast('A gerar relatório mensal PDF...','info')">📥 Exportar PDF</button></div></div>
+        <div class="card"><div style="padding:24px;text-align:center;"><div style="font-size:2.5rem;margin-bottom:12px;">📈</div><div style="font-weight:700;margin-bottom:6px;">Relatório de Crédito</div><div style="font-size:0.82rem;color:var(--text-light);margin-bottom:16px;">Todos os contratos e estados</div><button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="adminToast('A exportar relatório de crédito...','info')">📥 Exportar Excel</button></div></div>
+        <div class="card"><div style="padding:24px;text-align:center;"><div style="font-size:2.5rem;margin-bottom:12px;">👥</div><div style="font-weight:700;margin-bottom:6px;">Base de Clientes</div><div style="font-size:0.82rem;color:var(--text-light);margin-bottom:16px;">Lista completa de clientes</div><button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="adminToast('A exportar base de clientes...','info')">📥 Exportar CSV</button></div></div>
+        <div class="card"><div style="padding:24px;text-align:center;"><div style="font-size:2.5rem;margin-bottom:12px;">💳</div><div style="font-weight:700;margin-bottom:6px;">Relatório de Pagamentos</div><div style="font-size:0.82rem;color:var(--text-light);margin-bottom:16px;">Histórico de transações</div><button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="adminToast('A exportar pagamentos...','info')">📥 Exportar CSV</button></div></div>
+        <div class="card"><div style="padding:24px;text-align:center;"><div style="font-size:2.5rem;margin-bottom:12px;">⚠️</div><div style="font-weight:700;margin-bottom:6px;">Incumprimentos</div><div style="font-size:0.82rem;color:var(--text-light);margin-bottom:16px;">Clientes e contratos em atraso</div><button class="btn btn-danger" style="width:100%;justify-content:center;" onclick="adminToast('A exportar relatório de incumprimentos...','info')">📥 Exportar PDF</button></div></div>
+        <div class="card"><div style="padding:24px;text-align:center;"><div style="font-size:2.5rem;margin-bottom:12px;">📧</div><div style="font-weight:700;margin-bottom:6px;">Newsletter</div><div style="font-size:0.82rem;color:var(--text-light);margin-bottom:16px;">Subscritores e métricas de email</div><button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="adminToast('A exportar dados de newsletter...','info')">📥 Exportar Excel</button></div></div>
+      </div>
+    </div>
+
+  </div><!-- /page-content -->
+</div><!-- /main -->
+
+<!-- ═══════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════ -->
+
+<!-- Application Detail -->
+<div class="modal-overlay" id="modalAppDetail">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header"><div class="modal-title">📄 Detalhe do Pedido <span id="modAppNo">#CR-0000</span></div><button class="modal-close" onclick="closeModal('modalAppDetail')">✕</button></div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-item"><div class="label">Cliente</div><div class="value" id="modAppName">—</div></div>
+        <div class="detail-item"><div class="label">NIF</div><div class="value" id="modAppNif">—</div></div>
+        <div class="detail-item"><div class="label">Tipo</div><div class="value" id="modAppType">—</div></div>
+        <div class="detail-item"><div class="label">Montante</div><div class="value" style="color:var(--primary);" id="modAppAmount">—</div></div>
+        <div class="detail-item"><div class="label">Prazo</div><div class="value" id="modAppTerm">—</div></div>
+        <div class="detail-item"><div class="label">TAN</div><div class="value" id="modAppRate">—</div></div>
+        <div class="detail-item"><div class="label">Data</div><div class="value" id="modAppDate">—</div></div>
+        <div class="detail-item"><div class="label">Estado</div><div class="value" id="modAppStatus">—</div></div>
+      </div>
+
+      <h4 style="font-size:0.85rem;font-weight:700;color:var(--text-dark);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border);">🪪 Identificação & Residência</h4>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="label">Nacionalidade</div><div class="value" id="modAppNationality">—</div></div>
+        <div class="detail-item"><div class="label">Estatuto Residência</div><div class="value" id="modAppResidence">—</div></div>
+        <div class="detail-item"><div class="label">Documento</div><div class="value" id="modAppDocType">—</div></div>
+        <div class="detail-item"><div class="label">Nº Documento</div><div class="value" id="modAppDocNumber">—</div></div>
+      </div>
+      <div class="detail-item" style="margin-top:10px;"><div class="label">Endereço</div><div class="value" style="font-size:0.95rem;" id="modAppAddress">—</div></div>
+
+      <h4 style="font-size:0.85rem;font-weight:700;color:var(--text-dark);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border);">💼 Emprego & Finanças</h4>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="label">Situação</div><div class="value" id="modAppEmployment">—</div></div>
+        <div class="detail-item"><div class="label">Rendimento Mensal</div><div class="value" id="modAppIncome">—</div></div>
+        <div class="detail-item"><div class="label">Dívidas Existentes</div><div class="value" id="modAppDebts">—</div></div>
+        <div class="detail-item"><div class="label">Taxa de Esforço</div><div class="value" id="modAppDsr">—</div></div>
+      </div>
+      <div class="detail-item" style="margin-top:10px;"><div class="label">IBAN</div><div class="value td-mono" style="font-size:0.95rem;" id="modAppIban">—</div></div>
+      <div class="detail-item" style="margin-top:10px;"><div class="label">Finalidade do Crédito</div><div class="value" style="font-size:0.95rem;" id="modAppPurpose">—</div></div>
+      <div class="detail-item" style="margin-top:10px;"><div class="label">Contacto</div><div class="value" style="font-size:0.9rem;" id="modAppContact">—</div></div>
+
+      <div class="form-group" style="margin-top:18px;"><label class="form-label">Observações Internas</label><textarea class="form-input" rows="3" placeholder="Notas sobre este pedido..." id="modAppNotes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalAppDetail')">Fechar</button>
+      <button class="btn btn-success" id="modAppApproveBtn" onclick="approveFromModal()">✅ Aprovar Pedido</button>
+      <button class="btn btn-danger" id="modAppRejectBtn" onclick="rejectFromModal()">✗ Rejeitar</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Loan -->
+<div class="modal-overlay" id="modalNewLoan">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">➕ Novo Pedido de Crédito</div><button class="modal-close" onclick="closeModal('modalNewLoan')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nome do Cliente</label><input class="form-input" id="nlName" placeholder="Nome completo" /></div>
+        <div class="form-group"><label class="form-label">NIF</label><input class="form-input" id="nlNif" placeholder="NIF de 9 dígitos" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="nlEmail" type="email" placeholder="email@exemplo.pt" /></div>
+        <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="nlPhone" placeholder="+351 9XX XXX XXX" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Tipo de Crédito</label>
+          <select class="form-input" id="nlType">
+            <option value="personal">Pessoal</option><option value="mortgage">Habitação</option>
+            <option value="car">Automóvel</option><option value="consolidation">Consolidação</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Montante (€)</label><input class="form-input" id="nlAmount" type="number" placeholder="10000" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Prazo (meses)</label><input class="form-input" id="nlTerm" type="number" placeholder="36" /></div>
+        <div class="form-group"><label class="form-label">TAN (%)</label><input class="form-input" id="nlRate" type="number" step="0.01" placeholder="7.99" /></div>
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-input" id="nlNotes" rows="2" placeholder="Notas sobre este pedido..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalNewLoan')">Cancelar</button><button class="btn btn-primary" id="btnSaveNewLoan" onclick="saveNewLoan()">💾 Criar Pedido</button></div>
+  </div>
+</div>
+
+<!-- New Client -->
+<div class="modal-overlay" id="modalNewClient">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">👤 Novo Cliente</div><button class="modal-close" onclick="closeModal('modalNewClient')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nome Completo</label><input class="form-input" id="ncName" placeholder="Nome e apelido" /></div>
+        <div class="form-group"><label class="form-label">NIF</label><input class="form-input" id="ncNif" placeholder="NIF de 9 dígitos" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="ncEmail" type="email" placeholder="email@exemplo.pt" /></div>
+        <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="ncPhone" placeholder="+351 9XX XXX XXX" /></div>
+      </div>
+      <div class="form-group"><label class="form-label">Morada</label><input class="form-input" id="ncAddress" placeholder="Rua, Número, Localidade, Código Postal" /></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Data de Nascimento</label><input class="form-input" id="ncDob" type="date" /></div>
+        <div class="form-group"><label class="form-label">Rendimento Mensal (€)</label><input class="form-input" id="ncIncome" type="number" placeholder="2000" /></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalNewClient')">Cancelar</button><button class="btn btn-primary" id="btnSaveNewClient" onclick="saveNewClient()">💾 Criar Cliente</button></div>
+  </div>
+</div>
+
+<!-- Client Detail -->
+<div class="modal-overlay" id="modalClientDetail">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">👁 Perfil do Cliente — <span id="modClientName">—</span></div><button class="modal-close" onclick="closeModal('modalClientDetail')">✕</button></div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-item"><div class="label">Código</div><div class="value" id="modClientCode">—</div></div>
+        <div class="detail-item"><div class="label">NIF</div><div class="value" id="modClientNif">—</div></div>
+        <div class="detail-item"><div class="label">Email</div><div class="value" style="font-size:0.9rem;" id="modClientEmail">—</div></div>
+        <div class="detail-item"><div class="label">Telefone</div><div class="value" id="modClientPhone">—</div></div>
+        <div class="detail-item"><div class="label">Morada</div><div class="value" style="font-size:0.85rem;" id="modClientAddress">—</div></div>
+        <div class="detail-item"><div class="label">IBAN</div><div class="value" style="font-size:0.85rem;" id="modClientIban">—</div></div>
+        <div class="detail-item"><div class="label">Rendimento Mensal</div><div class="value" id="modClientIncome">—</div></div>
+        <div class="detail-item"><div class="label">Situação Profissional</div><div class="value" style="font-size:0.85rem;" id="modClientEmployment">—</div></div>
+        <div class="detail-item"><div class="label">Cliente desde</div><div class="value" id="modClientSince">—</div></div>
+        <div class="detail-item"><div class="label">Estado</div><div class="value" id="modClientStatus">—</div></div>
+        <div class="detail-item"><div class="label">Conta Online</div><div class="value" style="font-size:0.85rem;" id="modClientAccount">—</div></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalClientDetail')">Fechar</button><button class="btn btn-danger" onclick="blockClientFromModal()">🚫 Bloquear</button></div>
+  </div>
+</div>
+
+<!-- Loan Detail -->
+<div class="modal-overlay" id="modalLoanDetail">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">💰 Detalhe do Contrato <span id="modLoanContract">—</span></div><button class="modal-close" onclick="closeModal('modalLoanDetail')">✕</button></div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-item"><div class="label">Cliente</div><div class="value" id="modLoanClient">—</div></div>
+        <div class="detail-item"><div class="label">Tipo</div><div class="value" id="modLoanType">—</div></div>
+        <div class="detail-item"><div class="label">Capital</div><div class="value" style="color:var(--primary);" id="modLoanPrincipal">—</div></div>
+        <div class="detail-item"><div class="label">TAN</div><div class="value" id="modLoanRate">—</div></div>
+        <div class="detail-item"><div class="label">Prestação</div><div class="value" id="modLoanPayment">—</div></div>
+        <div class="detail-item"><div class="label">Prazo</div><div class="value" id="modLoanTerm">—</div></div>
+        <div class="detail-item"><div class="label">Início</div><div class="value" id="modLoanStart">—</div></div>
+        <div class="detail-item"><div class="label">Fim</div><div class="value" id="modLoanEnd">—</div></div>
+        <div class="detail-item"><div class="label">Pago</div><div class="value" style="color:var(--success);" id="modLoanPaid">—</div></div>
+        <div class="detail-item"><div class="label">Restante</div><div class="value" id="modLoanRemaining">—</div></div>
+        <div class="detail-item"><div class="label">Estado</div><div class="value" id="modLoanStatus">—</div></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalLoanDetail')">Fechar</button></div>
+  </div>
+</div>
+
+<!-- Manual Payment -->
+<div class="modal-overlay" id="modalManualPayment">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">💳 Registar Pagamento Manual</div><button class="modal-close" onclick="closeModal('modalManualPayment')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Contrato</label>
+        <select class="form-input" id="payLoanSelect"><option value="">A carregar contratos...</option></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Montante (€)</label><input class="form-input" type="number" id="payAmount" placeholder="241.00" step="0.01" min="0.01" /></div>
+        <div class="form-group"><label class="form-label">Data</label><input class="form-input" type="date" id="payDate" /></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Método</label>
+        <select class="form-input" id="payMethod">
+          <option value="bank_transfer">Transferência Bancária</option>
+          <option value="mb_way">MB Way</option>
+          <option value="direct_debit">Débito Direto</option>
+          <option value="cash">Numerário</option>
+          <option value="other">Outro</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Referência</label><input class="form-input" id="payRef" placeholder="Referência da transação (opcional)" /></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalManualPayment')">Cancelar</button><button class="btn btn-success" id="btnSavePay" onclick="saveManualPayment()">💾 Registar</button></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="adminToast"></div>
+
+<script>
+/* ── Admin Auth ──
+   Real Supabase Auth now backs this panel — there is no password
+   hard-coded in the page source anymore. Signing in checks the
+   credentials against Supabase Auth, then admin_login_check()
+   (a database function) confirms the email belongs to an active
+   row in admin_users, links the two accounts together on first
+   login, and logs an 'admin_login' activity entry. */
+let currentAdminEmail = null;
+let currentAdminName  = null;
+
+async function doAdminLogin() {
+  const email = document.getElementById('gEmail').value.trim();
+  const pass  = document.getElementById('gPass').value;
+  const err   = document.getElementById('gateError');
+  const btn   = document.getElementById('gateSubmitBtn');
+  const hideErr = () => { err.style.display = 'none'; };
+  const showErr = (msg) => {
+    err.textContent = msg || 'Email ou palavra-passe incorretos.';
+    err.style.display = 'block';
+    setTimeout(hideErr, 4000);
+  };
+
+  if (!email || !pass) { showErr('Preencha o email e a palavra-passe.'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'A entrar...'; }
+
+  const { error: authErr } = await _supabase.auth.signInWithPassword({ email, password: pass });
+  if (authErr) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Aceder ao Painel →'; }
+    showErr('Email ou palavra-passe incorretos.');
+    return;
+  }
+
+  const { data: rows, error: rpcErr } = await _supabase.rpc('admin_login_check');
+  const check = Array.isArray(rows) ? rows[0] : rows;
+  if (btn) { btn.disabled = false; btn.textContent = 'Aceder ao Painel →'; }
+
+  if (rpcErr || !check || !check.ok) {
+    // Signed into Supabase Auth fine, but this account isn't a
+    // recognised/active admin — don't leave a dangling session.
+    await _supabase.auth.signOut();
+    showErr('Esta conta não tem acesso ao painel de administração.');
+    return;
+  }
+
+  currentAdminEmail = email;
+  currentAdminName  = check.admin_name || email;
+  hideErr();
+  document.getElementById('loginGate').style.opacity = '0';
+  document.getElementById('loginGate').style.transition = 'opacity 0.4s ease';
+  setTimeout(() => { document.getElementById('loginGate').style.display = 'none'; }, 400);
+  adminToast(`Bem-vindo, ${currentAdminName}! 👋`, 'success');
+  loadAllLiveData();
+}
+document.getElementById('gPass').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
+document.getElementById('gEmail').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
+
+async function doLogout() {
+  try { await _supabase.rpc('log_activity', { p_action: 'admin_logout' }); } catch (e) {}
+  await _supabase.auth.signOut();
+  currentAdminEmail = null;
+  currentAdminName  = null;
+  document.getElementById('loginGate').style.display = 'flex';
+  document.getElementById('loginGate').style.opacity = '1';
+  document.getElementById('gEmail').value = '';
+  document.getElementById('gPass').value = '';
+}
+
+// Restore an existing admin session on page refresh instead of
+// forcing a fresh login every time (the old version had no session
+// persistence at all — a reload always showed the gate).
+(async function restoreAdminSession() {
+  const { data: { session } } = await _supabase.auth.getSession();
+  if (!session || !session.user) return;
+  const { data: rows, error: rpcErr } = await _supabase.rpc('admin_login_check');
+  const check = Array.isArray(rows) ? rows[0] : rows;
+  if (rpcErr || !check || !check.ok) { await _supabase.auth.signOut(); return; }
+  currentAdminEmail = session.user.email;
+  currentAdminName  = check.admin_name || currentAdminEmail;
+  document.getElementById('loginGate').style.display = 'none';
+  loadAllLiveData();
+})();
+
+/* ── New Client / New Loan modals (previously these just closed and
+   showed a fake "success" toast without saving anything at all) ── */
+async function saveNewClient() {
+  const btn = document.getElementById('btnSaveNewClient');
+  const name  = document.getElementById('ncName').value.trim();
+  const nif   = document.getElementById('ncNif').value.trim();
+  const email = document.getElementById('ncEmail').value.trim();
+  const phone = document.getElementById('ncPhone').value.trim();
+  const address = document.getElementById('ncAddress').value.trim();
+  const dob   = document.getElementById('ncDob').value || null;
+  const income = document.getElementById('ncIncome').value ? parseFloat(document.getElementById('ncIncome').value) : null;
+
+  if (!name || name.length < 2) { adminToast('Introduza o nome completo.', 'error'); return; }
+  if (!/^[0-9]{9}$/.test(nif))  { adminToast('NIF inválido — deve ter 9 dígitos.', 'error'); return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { adminToast('Email inválido.', 'error'); return; }
+
+  btn.disabled = true; btn.textContent = 'A guardar...';
+  const { error } = await _supabase.rpc('admin_create_client', {
+    p_full_name: name, p_email: email, p_nif: nif, p_phone: phone || null,
+    p_address: address || null, p_date_of_birth: dob, p_monthly_income: income,
+  });
+  btn.disabled = false; btn.textContent = '💾 Criar Cliente';
+
+  if (error) { adminToast('Erro ao criar cliente: ' + error.message, 'error'); return; }
+
+  closeModal('modalNewClient');
+  adminToast('✅ Cliente adicionado com sucesso!', 'success');
+  ['ncName','ncNif','ncEmail','ncPhone','ncAddress','ncDob','ncIncome'].forEach(id => { document.getElementById(id).value = ''; });
+  loadClientsTable();
+  loadDashboardStats();
+}
+
+async function saveNewLoan() {
+  const btn = document.getElementById('btnSaveNewLoan');
+  const name   = document.getElementById('nlName').value.trim();
+  const nif    = document.getElementById('nlNif').value.trim();
+  const email  = document.getElementById('nlEmail').value.trim();
+  const phone  = document.getElementById('nlPhone').value.trim();
+  const type   = document.getElementById('nlType').value;
+  const amount = parseFloat(document.getElementById('nlAmount').value);
+  const term   = parseInt(document.getElementById('nlTerm').value, 10);
+  const rateInput = document.getElementById('nlRate').value;
+  const rate   = rateInput ? parseFloat(rateInput) / 100 : 0.0799;
+  const notes  = document.getElementById('nlNotes').value.trim();
+
+  if (!name || name.length < 2) { adminToast('Introduza o nome do cliente.', 'error'); return; }
+  if (!/^[0-9]{9}$/.test(nif))  { adminToast('NIF inválido — deve ter 9 dígitos.', 'error'); return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { adminToast('Email inválido.', 'error'); return; }
+  if (!amount || amount <= 0)   { adminToast('Introduza um montante válido.', 'error'); return; }
+  if (!term || term <= 0)       { adminToast('Introduza um prazo válido.', 'error'); return; }
+
+  btn.disabled = true; btn.textContent = 'A guardar...';
+  const { data: appNo, error } = await _supabase.rpc('submit_loan_application', {
+    p_full_name: name, p_email: email, p_nif: nif, p_phone: phone || null,
+    p_address: null, p_date_of_birth: null, p_nationality: null, p_residence_status: null,
+    p_id_document_type: null, p_id_document_number: null, p_monthly_income: null,
+    p_iban: null, p_employment_status: null, p_loan_type: type, p_amount: amount,
+    p_term_months: term, p_annual_rate: rate, p_loan_purpose: notes || null, p_existing_debts: 0,
+  });
+  btn.disabled = false; btn.textContent = '💾 Criar Pedido';
+
+  if (error) { adminToast('Erro ao criar pedido: ' + error.message, 'error'); return; }
+
+  closeModal('modalNewLoan');
+  adminToast(`✅ Pedido ${appNo ? '#'+appNo+' ' : ''}criado com sucesso!`, 'success');
+  ['nlName','nlNif','nlEmail','nlPhone','nlAmount','nlTerm','nlRate','nlNotes'].forEach(id => { document.getElementById(id).value = ''; });
+  loadApplicationsTable();
+  loadDashboardStats();
+}
+
+/* ── Section Navigation ── */
+function showSection(id, el) {
+  document.querySelectorAll('.page-content > .section').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-'+id)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const titles = {
+    dashboard: 'Dashboard', applications: 'Pedidos de Crédito', clients: 'Clientes',
+    loans: 'Empréstimos Ativos', payments: 'Pagamentos', messages: 'Mensagens',
+    newsletter: 'Newsletter', activity: 'Atividade', settings: 'Definições', reports: 'Relatórios'
+  };
+  document.getElementById('topbarTitle').textContent = titles[id] || id;
+  // close mobile menu
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+/* ── Clock ── */
+function updateClock() {
+  document.getElementById('clockDisplay').textContent = new Date().toLocaleTimeString('pt-PT');
+}
+setInterval(updateClock, 1000); updateClock();
+
+/* ── Mobile Sidebar ── */
+document.getElementById('mobileToggle').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+/* ── Chart ── */
+(function buildChart() {
+  const data = [52, 71, 63, 88, 95, 110, 128, 142];
+  const labels = ['Out', 'Nov', 'Dez', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai'];
+  const bars = document.getElementById('chartBars');
+  const lbls = document.getElementById('chartLabels');
+  if (!bars) return;
+  const max = Math.max(...data);
+  data.forEach((v, i) => {
+    const bar = document.createElement('div');
+    bar.style.cssText = `flex:1;background:linear-gradient(to top,#003F8C,#00BFFF);border-radius:4px 4px 0 0;height:${(v/max*100).toFixed(1)}%;opacity:0.8;transition:opacity 0.2s;cursor:pointer;`;
+    bar.title = `${labels[i]}: ${v} pedidos`;
+    bar.onmouseover = () => bar.style.opacity = '1';
+    bar.onmouseout  = () => bar.style.opacity = '0.8';
+    bars.appendChild(bar);
+    const lbl = document.createElement('div');
+    lbl.style.flex = '1';
+    lbl.style.textAlign = 'center';
+    lbl.textContent = labels[i];
+    lbls.appendChild(lbl);
+  });
+})();
+
+/* ── Toast ── */
+let toastTimer;
+function adminToast(msg, type='info') {
+  const t = document.getElementById('adminToast');
+  t.textContent = msg;
+  t.className = type;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ── Modal ── */
+function openModal(id) { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+/* ── Table Filter ── */
+function filterTable(tableId, search) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+  const rows = table.querySelectorAll('tbody tr');
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(search.toLowerCase()) ? '' : 'none';
+  });
+}
+
+/* ── App Actions ── */
+function approveApp(btn, name) {
+  const row = btn.closest('tr');
+  row.querySelector('.badge').className = 'badge approved';
+  row.querySelector('.badge').textContent = '✅ Aprovado';
+  btn.closest('td').querySelectorAll('.btn-success,.btn-danger').forEach(b => b.remove());
+  adminToast(`✅ Pedido de ${name} aprovado com sucesso!`,'success');
+  const cnt = document.getElementById('pendingCount');
+  const sbb = document.getElementById('sidebarPendingBadge');
+  if (cnt) { cnt.textContent = Math.max(0, parseInt(cnt.textContent)-1); }
+  if (sbb) { sbb.textContent = Math.max(0, parseInt(sbb.textContent)-1); }
+}
+function rejectApp(btn) {
+  const row = btn.closest('tr');
+  row.querySelector('.badge').className = 'badge rejected';
+  row.querySelector('.badge').textContent = '✗ Rejeitado';
+  btn.closest('td').querySelectorAll('.btn-success,.btn-danger').forEach(b => b.remove());
+  adminToast('Pedido rejeitado.','error');
+}
+
+
+/* ══════════════════════════════════════════════
+   SUPABASE — LIVE DATA LOADER
+   Runs after login to populate all sections
+   with real data from the database.
+══════════════════════════════════════════════ */
+
+async function loadAllLiveData() {
+  try {
+    await Promise.all([
+      loadDashboardStats(),
+      loadApplicationsTable(),
+      loadClientsTable(),
+      loadLoansTable(),
+      loadPaymentsTable(),
+      loadPaymentsStats(),
+      loadMessagesTable(),
+      loadNewsletterStats(),
+      loadNewsletterTable(),
+      loadActivityTable(),
+      loadRecentActivityFeed(),
+      loadSettings(),
+    ]);
+  } catch(e) {
+    console.warn('Supabase load error:', e);
+  }
+}
+
+/* ── Dashboard Stats ── */
+async function loadDashboardStats() {
+  const { data: summary } = await _supabase.from('vw_dashboard_summary').select('*').single();
+  if (!summary) return;
+
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+
+  set('pendingCount', summary.pending_applications ?? 0);
+  set('sidebarPendingBadge', summary.pending_applications ?? 0);
+
+  // Update stat cards (scoped to the dashboard section only — a
+  // page-wide selector here would silently misalign as soon as any
+  // other section, like Payments or Newsletter, has its own cards)
+  const cards = document.querySelectorAll('#s-dashboard .stat-card .stat-num');
+  if (cards[1]) cards[1].textContent = (summary.active_clients ?? 0).toLocaleString('pt-PT');
+  if (cards[2]) cards[2].textContent = summary.pending_applications ?? 0;
+  if (cards[3]) cards[3].textContent = summary.defaulted_loans ?? 0;
+
+  const portfolio = summary.total_portfolio ?? 0;
+  if (cards[0]) cards[0].textContent = '€' + (portfolio/1000000).toFixed(1) + 'M';
+
+  const received = summary.received_this_month ?? 0;
+  if (cards[4]) cards[4].textContent = '€' + Math.round(received/1000) + 'K';
+
+  // Unread messages badge
+  const msgBadge = document.getElementById('sidebarMessagesBadge');
+  if (msgBadge) {
+    const unread = summary.unread_messages ?? 0;
+    msgBadge.textContent = unread;
+    msgBadge.style.display = unread > 0 ? '' : 'none';
+  }
+}
+
+/* ── Applications Table ── */
+async function loadApplicationsTable() {
+  const { data: apps } = await _supabase
+    .from('vw_applications_full')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  const tbody = document.querySelector('#appTable tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  window._appsCache = {};
+  if (!apps || !apps.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-light);padding:28px;">Ainda não há pedidos de crédito.</td></tr>';
+    return;
+  }
+
+  // Cache full application records globally so the detail modal can read them
+  apps.forEach(a => { window._appsCache[a.id] = a; });
+
+  const typeMap = { personal:'Pessoal', mortgage:'Habitação', car:'Automóvel', consolidation:'Consolidação' };
+  const statusMap = {
+    pending:  '<span class="badge pending">⏳ Pendente</span>',
+    review:   '<span class="badge review">🔍 Em Análise</span>',
+    approved: '<span class="badge approved">✅ Aprovado</span>',
+    rejected: '<span class="badge rejected">✗ Rejeitado</span>',
+  };
+
+  apps.forEach(app => {
+    const date = new Date(app.created_at).toLocaleDateString('pt-PT');
+    const actions = (app.status === 'pending' || app.status === 'review')
+      ? `<button class="btn btn-sm btn-success" onclick="approveAppDB('${app.id}','${app.client_name}',this)">✅</button>
+         <button class="btn btn-sm btn-danger"  onclick="rejectAppDB('${app.id}',this)">✗</button>
+         <button class="btn btn-sm btn-ghost"   onclick="viewApplicationDetail('${app.id}')">👁</button>`
+      : `<button class="btn btn-sm btn-ghost" onclick="viewApplicationDetail('${app.id}')">👁</button>`;
+
+    tbody.innerHTML += `
+      <tr>
+        <td class="td-mono">#${app.application_no}</td>
+        <td class="td-name">${app.client_name}</td>
+        <td class="td-mono">${app.client_nif}</td>
+        <td>${typeMap[app.loan_type] || app.loan_type}</td>
+        <td style="font-weight:700;">€${Number(app.amount).toLocaleString('pt-PT')}</td>
+        <td>${app.term_months} meses</td>
+        <td>${date}</td>
+        <td>${statusMap[app.status] || app.status}</td>
+        <td>${actions}</td>
+      </tr>`;
+  });
+}
+
+/* ── View Application Detail Modal (dynamic, real KYC data) ── */
+function viewApplicationDetail(appId) {
+  const app = (window._appsCache || {})[appId];
+  if (!app) { adminToast('Não foi possível carregar os detalhes do pedido.', 'error'); return; }
+
+  const typeMap = { personal:'Crédito Pessoal', mortgage:'Crédito Habitação', car:'Crédito Automóvel', consolidation:'Consolidação' };
+  const residenceMap = { citizen:'🇵🇹 Cidadão Português', eu_resident:'🇪🇺 Residente UE', non_eu_resident:'🌍 Residente Não-UE', non_resident:'✈️ Não-Residente' };
+  const docTypeMap = { cc:'Cartão de Cidadão', passport:'Passaporte', residence_permit:'Título de Residência' };
+  const employmentMap = { employed:'Trabalhador por Conta de Outrem', self_employed:'Trabalhador Independente', business_owner:'Empresário', retired:'Aposentado', student:'Estudante', unemployed:'Desempregado' };
+  const statusMap = { pending:'⏳ Pendente', review:'🔍 Em Análise', approved:'✅ Aprovado', rejected:'✗ Rejeitado' };
+
+  document.getElementById('modAppNo').textContent = '#' + app.application_no;
+  document.getElementById('modAppName').textContent = app.client_name || '—';
+  document.getElementById('modAppNif').textContent = app.client_nif || '—';
+  document.getElementById('modAppType').textContent = typeMap[app.loan_type] || app.loan_type;
+  document.getElementById('modAppAmount').textContent = '€' + Number(app.amount).toLocaleString('pt-PT');
+  document.getElementById('modAppTerm').textContent = app.term_months + ' meses';
+  document.getElementById('modAppRate').textContent = (app.tan_percent != null ? Number(app.tan_percent).toFixed(2) : '—') + '%';
+  document.getElementById('modAppDate').textContent = new Date(app.created_at).toLocaleDateString('pt-PT');
+  document.getElementById('modAppStatus').textContent = statusMap[app.status] || app.status;
+
+  document.getElementById('modAppNationality').textContent = app.nationality || '—';
+  document.getElementById('modAppResidence').textContent = residenceMap[app.residence_status] || app.residence_status || '—';
+  document.getElementById('modAppDocType').textContent = docTypeMap[app.id_document_type] || app.id_document_type || '—';
+  document.getElementById('modAppDocNumber').textContent = app.id_document_number || '—';
+  document.getElementById('modAppAddress').textContent = app.address || '—';
+
+  document.getElementById('modAppEmployment').textContent = employmentMap[app.employment_status] || app.employment_status || '—';
+  const income = app.monthly_income != null ? Number(app.monthly_income) : null;
+  const debts = app.existing_debts != null ? Number(app.existing_debts) : 0;
+  document.getElementById('modAppIncome').textContent = income != null ? '€' + income.toLocaleString('pt-PT') : '—';
+  document.getElementById('modAppDebts').textContent = '€' + debts.toLocaleString('pt-PT');
+
+  // Compute estimated DSR (debt service ratio) — existing debts + this loan's estimated payment vs income
+  if (income) {
+    const estPayment = (Number(app.amount) * (Number(app.tan_percent || 7.99) / 100 / 12)) / (1 - Math.pow(1 + (Number(app.tan_percent || 7.99) / 100 / 12), -app.term_months)) || 0;
+    const dsr = ((debts + estPayment) / income * 100);
+    const dsrColor = dsr > 35 ? 'color:#C62828;' : dsr > 25 ? 'color:#F57C00;' : 'color:#2E7D32;';
+    document.getElementById('modAppDsr').innerHTML = `<span style="${dsrColor}">${dsr.toFixed(1)}%</span>`;
+  } else {
+    document.getElementById('modAppDsr').textContent = '—';
+  }
+
+  document.getElementById('modAppIban').textContent = app.iban || '—';
+  document.getElementById('modAppPurpose').textContent = app.loan_purpose || '—';
+  document.getElementById('modAppContact').textContent = `${app.client_email || '—'}  ·  ${app.client_phone || '—'}`;
+  document.getElementById('modAppNotes').value = app.notes || '';
+
+  // Toggle approve/reject buttons depending on current status
+  const approveBtn = document.getElementById('modAppApproveBtn');
+  const rejectBtn  = document.getElementById('modAppRejectBtn');
+  const canDecide = app.status === 'pending' || app.status === 'review';
+  approveBtn.style.display = canDecide ? 'inline-flex' : 'none';
+  rejectBtn.style.display  = canDecide ? 'inline-flex' : 'none';
+
+  window._currentModalAppId = appId;
+  openModal('modalAppDetail');
+}
+
+async function approveFromModal() {
+  const appId = window._currentModalAppId;
+  const app = (window._appsCache || {})[appId];
+  if (!appId || !app) return;
+  const notes = document.getElementById('modAppNotes').value;
+  if (notes) await _supabase.from('loan_applications').update({ notes }).eq('id', appId);
+  closeModal('modalAppDetail');
+  const { error } = await _supabase.from('loan_applications')
+    .update({ status: 'approved', reviewed_at: new Date().toISOString(), reviewed_by: currentAdminEmail, notes })
+    .eq('id', appId);
+  if (error) { adminToast('Erro ao aprovar: ' + error.message, 'error'); return; }
+  adminToast(`✅ Pedido de ${app.client_name} aprovado com sucesso!`, 'success');
+  await _supabase.from('activity_log').insert({
+    actor_type: 'admin', actor_email: currentAdminEmail, action: 'approved_application',
+    entity_type: 'application', entity_id: appId, details: `Approved for ${app.client_name}`
+  });
+  loadApplicationsTable();
+  loadDashboardStats();
+}
+
+async function rejectFromModal() {
+  const appId = window._currentModalAppId;
+  const app = (window._appsCache || {})[appId];
+  if (!appId || !app) return;
+  const notes = document.getElementById('modAppNotes').value;
+  closeModal('modalAppDetail');
+  const { error } = await _supabase.from('loan_applications')
+    .update({ status: 'rejected', reviewed_at: new Date().toISOString(), reviewed_by: currentAdminEmail, notes })
+    .eq('id', appId);
+  if (error) { adminToast('Erro ao rejeitar: ' + error.message, 'error'); return; }
+  adminToast('Pedido rejeitado.', 'error');
+  await _supabase.from('activity_log').insert({
+    actor_type: 'admin', actor_email: currentAdminEmail, action: 'rejected_application',
+    entity_type: 'application', entity_id: appId, details: `Rejected for ${app.client_name}`
+  });
+  loadApplicationsTable();
+  loadDashboardStats();
+}
+
+/* ── Clients Table ── */
+async function loadClientsTable() {
+  const { data: clients } = await _supabase
+    .from('clients')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  const tbody = document.querySelector('#clientTable tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  window._clientsCache = {};
+  if (!clients || !clients.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-light);padding:28px;">Ainda não há clientes registados.</td></tr>';
+    return;
+  }
+  clients.forEach(c => { window._clientsCache[c.id] = c; });
+
+  const statusMap = {
+    active:   '<span class="badge active">● Ativo</span>',
+    inactive: '<span class="badge inactive">○ Inativo</span>',
+    blocked:  '<span class="badge rejected">🚫 Bloqueado</span>',
+    overdue:  '<span class="badge overdue">● Em Atraso</span>',
+  };
+
+  clients.forEach(c => {
+    const date = new Date(c.created_at).toLocaleDateString('pt-PT', { month:'short', year:'numeric' });
+    const blockBtn = c.status === 'blocked' ? '' :
+      `<button class="btn btn-sm btn-danger" onclick="blockClient('${c.id}',this)">🚫</button>`;
+    tbody.innerHTML += `
+      <tr>
+        <td class="td-mono">#${c.client_code}</td>
+        <td class="td-name">${c.full_name}</td>
+        <td>${c.email}</td>
+        <td class="td-mono">${c.nif}</td>
+        <td>${c.phone || '—'}</td>
+        <td>${date}</td>
+        <td>${c.auth_user_id ? '✅' : '—'}</td>
+        <td>${statusMap[c.status] || c.status}</td>
+        <td>
+          <button class="btn btn-sm btn-ghost" onclick="viewClientDetail('${c.id}')">👁 Ver</button>
+          ${blockBtn}
+        </td>
+      </tr>`;
+  });
+}
+
+/* ── View Client Detail Modal (dynamic, real data) ── */
+function viewClientDetail(clientId) {
+  const c = (window._clientsCache || {})[clientId];
+  if (!c) { adminToast('Não foi possível carregar os detalhes do cliente.', 'error'); return; }
+  const statusMap = { active:'● Ativo', inactive:'○ Inativo', blocked:'🚫 Bloqueado', overdue:'● Em Atraso' };
+  const employmentMap = { employed:'Trabalhador por Conta de Outrem', self_employed:'Trabalhador Independente', business_owner:'Empresário', retired:'Aposentado', student:'Estudante', unemployed:'Desempregado' };
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val != null && val !== '' ? val : '—'; };
+  set('modClientCode', '#' + c.client_code);
+  set('modClientName', c.full_name);
+  set('modClientEmail', c.email);
+  set('modClientNif', c.nif);
+  set('modClientPhone', c.phone);
+  set('modClientAddress', c.address);
+  set('modClientIban', c.iban);
+  set('modClientIncome', c.monthly_income != null ? '€' + Number(c.monthly_income).toLocaleString('pt-PT') : '—');
+  set('modClientEmployment', employmentMap[c.employment_status] || c.employment_status);
+  set('modClientStatus', statusMap[c.status] || c.status);
+  set('modClientSince', c.created_at ? new Date(c.created_at).toLocaleDateString('pt-PT') : '—');
+  set('modClientAccount', c.auth_user_id ? '✅ Conta criada' : '— Sem conta associada');
+  window._currentModalClientId = clientId;
+  openModal('modalClientDetail');
+}
+
+/* ── Loans Table ── */
+async function loadLoansTable() {
+  const { data: loans } = await _supabase
+    .from('loans')
+    .select('*, clients(full_name)')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  const tbody = document.querySelector('#loansTable tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  window._loansCache = {};
+  if (!loans || !loans.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-light);padding:28px;">Ainda não há contratos de crédito ativos.</td></tr>';
+    return;
+  }
+  loans.forEach(l => { window._loansCache[l.id] = l; });
+
+  const typeMap = { personal:'Pessoal', mortgage:'Habitação', car:'Automóvel', consolidation:'Consolidação' };
+  const statusMap = {
+    active:        '<span class="badge active">● OK</span>',
+    defaulted:     '<span class="badge overdue">⚠ Atraso</span>',
+    paid_off:      '<span class="badge paid">✅ Liquidado</span>',
+    early_settled: '<span class="badge info">★ Amortizado</span>',
+  };
+
+  loans.forEach(l => {
+    tbody.innerHTML += `
+      <tr>
+        <td class="td-mono">#${l.contract_no}</td>
+        <td class="td-name">${l.clients?.full_name || '—'}</td>
+        <td>${typeMap[l.loan_type] || l.loan_type}</td>
+        <td>€${Number(l.principal).toLocaleString('pt-PT')}</td>
+        <td>€${Number(l.monthly_payment).toLocaleString('pt-PT')}</td>
+        <td>${(l.annual_rate * 100).toFixed(2)}%</td>
+        <td>€${Number(l.amount_paid).toLocaleString('pt-PT')}</td>
+        <td>€${Number(l.amount_remaining).toLocaleString('pt-PT')}</td>
+        <td>${statusMap[l.status] || l.status}</td>
+        <td><button class="btn btn-sm btn-ghost" onclick="viewLoanDetail('${l.id}')">👁</button></td>
+      </tr>`;
+  });
+}
+
+/* ── View Loan Detail Modal (dynamic, real data) ── */
+function viewLoanDetail(loanId) {
+  const l = (window._loansCache || {})[loanId];
+  if (!l) { adminToast('Não foi possível carregar os detalhes do contrato.', 'error'); return; }
+  const typeMap = { personal:'Pessoal', mortgage:'Habitação', car:'Automóvel', consolidation:'Consolidação' };
+  const statusMap = { active:'● OK', defaulted:'⚠ Em Atraso', paid_off:'✅ Liquidado', early_settled:'★ Amortizado' };
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val != null && val !== '' ? val : '—'; };
+  set('modLoanContract', '#' + l.contract_no);
+  set('modLoanClient', l.clients?.full_name);
+  set('modLoanType', typeMap[l.loan_type] || l.loan_type);
+  set('modLoanPrincipal', '€' + Number(l.principal).toLocaleString('pt-PT'));
+  set('modLoanPayment', '€' + Number(l.monthly_payment).toLocaleString('pt-PT'));
+  set('modLoanRate', (Number(l.annual_rate) * 100).toFixed(2) + '%');
+  set('modLoanTerm', l.term_months + ' meses');
+  set('modLoanPaid', '€' + Number(l.amount_paid).toLocaleString('pt-PT'));
+  set('modLoanRemaining', '€' + Number(l.amount_remaining).toLocaleString('pt-PT'));
+  set('modLoanStart', l.start_date ? new Date(l.start_date).toLocaleDateString('pt-PT') : '—');
+  set('modLoanEnd', l.end_date ? new Date(l.end_date).toLocaleDateString('pt-PT') : '—');
+  set('modLoanStatus', statusMap[l.status] || l.status);
+  window._currentModalLoanId = loanId;
+  openModal('modalLoanDetail');
+}
+
+/* ── Payments Stat Cards ── */
+async function loadPaymentsStats() {
+  const { data: summary } = await _supabase.from('vw_dashboard_summary').select('received_this_month').single();
+  const received = summary?.received_this_month ?? 0;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('statReceivedMonth', '€' + Number(received).toLocaleString('pt-PT', { maximumFractionDigits: 0 }));
+
+  const { data: overdueLoans } = await _supabase
+    .from('loans').select('amount_remaining').eq('status', 'defaulted');
+  const overdueTotal = (overdueLoans || []).reduce((sum, l) => sum + Number(l.amount_remaining || 0), 0);
+  set('statOverdue', '€' + overdueTotal.toLocaleString('pt-PT', { maximumFractionDigits: 0 }));
+
+  const { data: activeLoans } = await _supabase
+    .from('loans').select('monthly_payment').eq('status', 'active');
+  const monthlyDue = (activeLoans || []).reduce((sum, l) => sum + Number(l.monthly_payment || 0), 0);
+  set('statMonthlyDue', '€' + monthlyDue.toLocaleString('pt-PT', { maximumFractionDigits: 0 }));
+}
+
+/* ── Payments Table ── */
+async function loadPaymentsTable() {
+  const { data: payments } = await _supabase
+    .from('vw_payments_full')
+    .select('*')
+    .order('payment_date', { ascending: false })
+    .limit(50);
+  const tbody = document.querySelector('#s-payments table tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (!payments || !payments.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light);padding:28px;">Ainda não há pagamentos registados.</td></tr>';
+    return;
+  }
+
+  const methodMap = { bank_transfer:'Transferência', mb_way:'MB Way', direct_debit:'Débito Direto', cash:'Numerário', other:'Outro' };
+  const statusMap = {
+    paid:    '<span class="badge paid">✅ Pago</span>',
+    failed:  '<span class="badge overdue">⚠ Falhou</span>',
+    pending: '<span class="badge pending">⏳ Pendente</span>',
+    refunded:'<span class="badge info">↩ Reembolso</span>',
+  };
+
+  payments.forEach(p => {
+    const color = p.status === 'paid' ? 'var(--success)' : 'var(--danger)';
+    const date  = new Date(p.payment_date).toLocaleDateString('pt-PT');
+    tbody.innerHTML += `
+      <tr>
+        <td class="td-mono">${p.payment_ref}</td>
+        <td class="td-name">${p.client_name}</td>
+        <td>#${p.contract_no}</td>
+        <td style="font-weight:700;color:${color};">€${Number(p.amount).toLocaleString('pt-PT')}</td>
+        <td>${methodMap[p.payment_method] || p.payment_method}</td>
+        <td>${date}</td>
+        <td>${statusMap[p.status] || p.status}</td>
+      </tr>`;
+  });
+}
+
+/* ── Messages Table ── */
+async function loadMessagesTable() {
+  const { data: msgs } = await _supabase
+    .from('messages')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  const tbody = document.querySelector('#s-messages table tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  window._messagesCache = {};
+  if (!msgs || !msgs.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:28px;">Ainda não há mensagens recebidas.</td></tr>';
+    return;
+  }
+  msgs.forEach(m => { window._messagesCache[m.id] = m; });
+
+  msgs.forEach(m => {
+    const date = new Date(m.created_at).toLocaleDateString('pt-PT');
+    const rowBg = m.status === 'unread' ? 'background:#FFFDE7;' : '';
+    const statusBadge = m.status === 'unread'
+      ? '<span class="badge pending">Não lida</span>'
+      : '<span class="badge approved">Respondida</span>';
+    const action = m.status !== 'replied'
+      ? `<button class="btn btn-sm btn-primary" onclick="replyMessage('${m.id}')">Responder</button>`
+      : `<button class="btn btn-sm btn-ghost" onclick="adminToast('Mensagem já respondida.','info')">Ver</button>`;
+
+    tbody.innerHTML += `
+      <tr style="${rowBg}">
+        <td class="td-name">${m.name}<br><small style="font-weight:400;color:var(--text-light);">${m.email}</small></td>
+        <td>${m.subject}</td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.body}</td>
+        <td>${date}</td>
+        <td>${statusBadge}</td>
+        <td>${action}</td>
+      </tr>`;
+  });
+}
+
+/* ── Newsletter stats ── */
+async function loadNewsletterStats() {
+  const { count } = await _supabase
+    .from('newsletter_subscribers')
+    .select('*', { count: 'exact', head: true })
+    .eq('subscribed', true);
+  if (count !== null) {
+    const el = document.querySelector('#s-newsletter .stat-num');
+    if (el) el.textContent = count.toLocaleString('pt-PT');
+  }
+}
+
+/* ── Newsletter subscribers table ── */
+const sourceMap = { website: 'Website', footer: 'Rodapé website', popup: 'Pop-up' };
+async function loadNewsletterTable() {
+  const { data: subs } = await _supabase
+    .from('newsletter_subscribers')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  const tbody = document.querySelector('#newsletterTable tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (!subs || !subs.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:28px;">Ainda não há subscritores.</td></tr>';
+    return;
+  }
+  subs.forEach(s => {
+    const date = new Date(s.created_at).toLocaleDateString('pt-PT');
+    tbody.innerHTML += `
+      <tr>
+        <td>${s.email}</td>
+        <td>${date}</td>
+        <td>${sourceMap[s.source] || s.source || '—'}</td>
+        <td><button class="btn btn-sm btn-danger" onclick="removeSubscriber('${s.id}',this)">🗑</button></td>
+      </tr>`;
+  });
+}
+
+async function removeSubscriber(id, btn) {
+  const { error } = await _supabase.from('newsletter_subscribers').update({ subscribed: false }).eq('id', id);
+  if (error) { adminToast('Erro: ' + error.message, 'error'); return; }
+  btn.closest('tr').remove();
+  adminToast('Subscritor removido.', 'success');
+  loadNewsletterStats();
+}
+
+/* ── Atividade (admin actions + client account activity) ── */
+const activityIcon = { admin: '🛠', client: '👤', system: '⚙️' };
+const activityLabel = {
+  admin_login: 'Início de sessão (admin)', admin_logout: 'Fim de sessão (admin)',
+  login: 'Início de sessão', logout: 'Fim de sessão', signup: 'Conta criada',
+  email_verified: 'Email verificado', approved_application: 'Pedido aprovado',
+  rejected_application: 'Pedido rejeitado', blocked_client: 'Cliente bloqueado',
+  registered_payment: 'Pagamento registado', updated_settings: 'Definições atualizadas',
+  application_submitted: 'Pedido submetido',
+};
+function formatActivityRow(a) {
+  const when = new Date(a.created_at).toLocaleString('pt-PT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  const label = activityLabel[a.action] || a.action;
+  return { when, icon: activityIcon[a.actor_type] || '•', label };
+}
+
+async function loadActivityTable() {
+  const tbody = document.querySelector('#activityTable tbody');
+  if (!tbody) return;
+  const filter = document.getElementById('activityFilter')?.value || '';
+  let q = _supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(150);
+  if (filter) q = q.eq('actor_type', filter);
+  const { data: rows, error } = await q;
+  tbody.innerHTML = '';
+  if (error) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:28px;">Erro ao carregar atividade.</td></tr>';
+    return;
+  }
+  if (!rows || !rows.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:28px;">Ainda não há atividade registada.</td></tr>';
+    return;
+  }
+  rows.forEach(a => {
+    const { when, icon, label } = formatActivityRow(a);
+    tbody.innerHTML += `
+      <tr>
+        <td>${when}</td>
+        <td>${icon} ${a.actor_type}</td>
+        <td>${a.actor_email}</td>
+        <td>${label}</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-light);">${a.details || '—'}</td>
+      </tr>`;
+  });
+}
+
+/* ── Dashboard "Atividade Recente" mini feed ── */
+const activityDotColor = {
+  admin_login: 'blue', admin_logout: 'blue', login: 'blue', logout: 'blue',
+  signup: 'green', email_verified: 'green', approved_application: 'green',
+  rejected_application: 'red', blocked_client: 'red', registered_payment: 'green',
+  updated_settings: 'orange', application_submitted: 'blue',
+};
+function timeAgo(dateStr) {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'agora mesmo';
+  if (mins < 60) return `há ${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `há ${hrs}h ${mins % 60}min`;
+  return `há ${Math.floor(hrs / 24)}d`;
+}
+async function loadRecentActivityFeed() {
+  const list = document.getElementById('recentActivityList');
+  if (!list) return;
+  const { data: rows } = await _supabase
+    .from('activity_log').select('*').order('created_at', { ascending: false }).limit(6);
+  if (!rows || !rows.length) {
+    list.innerHTML = '<div class="activity-item"><div><div class="activity-text">Ainda não há atividade registada.</div></div></div>';
+    return;
+  }
+  list.innerHTML = rows.map(a => {
+    const label = activityLabel[a.action] || a.action;
+    const dot = activityDotColor[a.action] || 'blue';
+    return `
+      <div class="activity-item">
+        <div class="activity-dot ${dot}"></div>
+        <div>
+          <div class="activity-text"><strong>${a.actor_email}</strong> — ${label}${a.details ? ' · ' + a.details : ''}</div>
+          <div class="activity-time">${timeAgo(a.created_at)}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ── Approve / Reject via DB ── */
+async function approveAppDB(id, name, btn) {
+  const { error } = await _supabase
+    .from('loan_applications')
+    .update({ status: 'approved', reviewed_at: new Date().toISOString(), reviewed_by: currentAdminEmail })
+    .eq('id', id);
+  if (error) { adminToast('Erro ao aprovar: ' + error.message, 'error'); return; }
+  approveApp(btn, name);
+  await _supabase.from('activity_log').insert({
+    actor_type: 'admin', actor_email: currentAdminEmail, action: 'approved_application',
+    entity_type: 'application', entity_id: id, details: 'Approved for ' + name
+  });
+}
+
+async function rejectAppDB(id, btn) {
+  const { error } = await _supabase
+    .from('loan_applications')
+    .update({ status: 'rejected', reviewed_at: new Date().toISOString(), reviewed_by: currentAdminEmail })
+    .eq('id', id);
+  if (error) { adminToast('Erro ao rejeitar: ' + error.message, 'error'); return; }
+  rejectApp(btn);
+  await _supabase.from('activity_log').insert({
+    actor_type: 'admin', actor_email: currentAdminEmail, action: 'rejected_application',
+    entity_type: 'application', entity_id: id, details: null
+  });
+}
+
+async function blockClient(id, btn) {
+  const { error } = await _supabase.from('clients').update({ status: 'blocked' }).eq('id', id);
+  if (error) { adminToast('Erro: ' + error.message, 'error'); return; }
+  const row = btn.closest('tr');
+  row.querySelector('.badge').outerHTML = '<span class="badge rejected">🚫 Bloqueado</span>';
+  btn.remove();
+  adminToast('Cliente bloqueado.', 'error');
+  await _supabase.from('activity_log').insert({ actor_type: 'admin', actor_email: currentAdminEmail, action: 'blocked_client', entity_type: 'client', entity_id: id });
+}
+
+async function blockClientFromModal() {
+  const id = window._currentModalClientId;
+  if (!id) return;
+  const { error } = await _supabase.from('clients').update({ status: 'blocked' }).eq('id', id);
+  if (error) { adminToast('Erro: ' + error.message, 'error'); return; }
+  closeModal('modalClientDetail');
+  adminToast('Cliente bloqueado.', 'error');
+  await _supabase.from('activity_log').insert({ actor_type: 'admin', actor_email: currentAdminEmail, action: 'blocked_client', entity_type: 'client', entity_id: id });
+  loadClientsTable();
+}
+
+async function replyMessage(id) {
+  await _supabase.from('messages').update({ status: 'read' }).eq('id', id);
+  adminToast('Mensagem marcada como lida. Use o email do cliente para responder.', 'info');
+  loadMessagesTable();
+}
+
+/* ── Load active loans into manual payment modal dropdown ── */
+async function loadLoansForPaymentModal() {
+  const sel = document.getElementById('payLoanSelect');
+  if (!sel) return;
+  const { data: loans } = await _supabase
+    .from('loans').select('id, contract_no, loan_type, monthly_payment, clients(full_name)')
+    .eq('status', 'active').order('contract_no');
+  if (!loans || !loans.length) {
+    sel.innerHTML = '<option value="">Nenhum contrato ativo encontrado</option>';
+    return;
+  }
+  const typeMap = { personal:'Pessoal', mortgage:'Habitação', car:'Automóvel', consolidation:'Consolidação' };
+  sel.innerHTML = loans.map(l =>
+    `<option value="${l.id}" data-amount="${l.monthly_payment}">
+      #${l.contract_no} — ${l.clients?.full_name || '?'} (${typeMap[l.loan_type]||l.loan_type}) — €${Number(l.monthly_payment).toLocaleString('pt-PT')}/mês
+    </option>`
+  ).join('');
+  // Set today's date as default
+  const today = new Date().toISOString().split('T')[0];
+  const dateEl = document.getElementById('payDate');
+  if (dateEl && !dateEl.value) dateEl.value = today;
+  // Prefill amount with monthly payment of first loan
+  const amtEl = document.getElementById('payAmount');
+  if (amtEl && !amtEl.value && loans[0]) amtEl.value = loans[0].monthly_payment;
+  // Update amount when loan changes
+  sel.onchange = () => {
+    const opt = sel.options[sel.selectedIndex];
+    if (amtEl && opt.dataset.amount) amtEl.value = opt.dataset.amount;
+  };
+}
+
+/* ── Save manual payment to Supabase ── */
+async function saveManualPayment() {
+  const loanId = document.getElementById('payLoanSelect').value;
+  const amount = parseFloat(document.getElementById('payAmount').value);
+  const date   = document.getElementById('payDate').value;
+  const method = document.getElementById('payMethod').value;
+  const ref    = document.getElementById('payRef').value.trim();
+
+  if (!loanId)       { adminToast('Selecione um contrato.', 'error'); return; }
+  if (!amount || amount <= 0) { adminToast('Introduza um montante válido.', 'error'); return; }
+  if (!date)         { adminToast('Selecione a data do pagamento.', 'error'); return; }
+
+  // Get loan to find client_id
+  const { data: loan } = await _supabase.from('loans').select('client_id, amount_paid, amount_remaining').eq('id', loanId).single();
+  if (!loan) { adminToast('Contrato não encontrado.', 'error'); return; }
+
+  const btn = document.getElementById('btnSavePay');
+  btn.disabled = true;
+  btn.textContent = 'A guardar...';
+
+  const payRef = 'PAY-' + new Date().getFullYear() + '-' + Date.now().toString().slice(-6);
+
+  const { error } = await _supabase.from('payments').insert({
+    payment_ref:    payRef,
+    loan_id:        loanId,
+    client_id:      loan.client_id,
+    amount:         amount,
+    payment_method: method,
+    payment_date:   date,
+    reference:      ref || null,
+    status:         'paid',
+    notes:          'Registado manualmente pelo administrador',
+  });
+
+  if (error) {
+    adminToast('Erro ao registar: ' + error.message, 'error');
+    btn.disabled = false; btn.textContent = '💾 Registar';
+    return;
+  }
+
+  // Update loan remaining balance
+  const newPaid      = Number(loan.amount_paid) + amount;
+  const newRemaining = Math.max(0, Number(loan.amount_remaining) - amount);
+  await _supabase.from('loans').update({ amount_paid: newPaid, amount_remaining: newRemaining }).eq('id', loanId);
+
+  await _supabase.from('activity_log').insert({
+    actor_type: 'admin', actor_email: currentAdminEmail, action: 'registered_payment',
+    entity_type: 'loan', entity_id: loanId, details: `€${amount} via ${method}`
+  });
+
+  closeModal('modalManualPayment');
+  adminToast(`✅ Pagamento de €${amount.toLocaleString('pt-PT')} registado — Ref: ${payRef}`, 'success');
+  loadPaymentsTable();
+  loadLoansTable();
+  btn.disabled = false; btn.textContent = '💾 Registar';
+}
+
+/* ── Contact form → Supabase (website pages) ── */
+async function submitContactToSupabase(name, email, subject, body) {
+  const { error } = await _supabase.from('messages').insert({ name, email, subject, body });
+  return !error;
+}
+
+/* ── Newsletter subscribe → Supabase ── */
+async function subscribeNewsletter(email, source='website') {
+  const { error } = await _supabase.from('newsletter_subscribers').insert({ email, source });
+  return !error;
+}
+
+/* ── Loan application → Supabase ── */
+async function submitLoanApplication(appData) {
+  const { error } = await _supabase.from('loan_applications').insert(appData);
+  return !error;
+}
+
+/* ── Settings — load from DB ── */
+async function loadSettings() {
+  const { data: rows } = await _supabase.from('system_settings').select('key,value');
+  if (!rows) return;
+  rows.forEach(row => {
+    const el = document.getElementById('set_' + row.key);
+    if (el) el.value = row.value;
+  });
+}
+
+/* ── Settings — save to DB ── */
+async function saveSettings() {
+  const fields = [
+    'tan_min_personal', 'tan_min_mortgage', 'tan_min_car',
+    'max_dsr', 'max_term_personal', 'max_term_mortgage'
+  ];
+  const updates = fields.map(key => {
+    const el = document.getElementById('set_' + key);
+    return el ? _supabase.from('system_settings')
+      .update({ value: el.value, updated_at: new Date().toISOString() })
+      .eq('key', key) : Promise.resolve();
+  });
+  const results = await Promise.all(updates);
+  const errors = results.filter(r => r && r.error);
+  if (errors.length) {
+    adminToast('Erro ao guardar algumas definições.', 'error');
+  } else {
+    adminToast('✅ Parâmetros guardados com sucesso!', 'success');
+    await _supabase.from('activity_log').insert({
+      actor_type: 'admin', actor_email: currentAdminEmail, action: 'updated_settings', details: 'Credit parameters updated'
+    });
+  }
+}
+
+/* ── Tab Filter ── */
+function filterApps(status, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const rows = document.querySelectorAll('#appTable tbody tr');
+  rows.forEach(row => {
+    if (status === 'all') { row.style.display = ''; return; }
+    const badge = row.querySelector('.badge')?.textContent?.toLowerCase() || '';
+    const map = { pending:'pendente', review:'análise', approved:'aprovado', rejected:'rejeitado' };
+    row.style.display = badge.includes(map[status]||status) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>
