@@ -28,6 +28,16 @@
 
 ## `assets/js/application-modal.js`
 
+- **Critical bug (found after initial delivery):** on `index.html`, the
+  `<script src="assets/js/application-modal.js">` tag is placed *before* the
+  modal's own HTML markup (`#appModalOverlay`) further down the page. The
+  script's setup code ran immediately, didn't find that element yet (it
+  didn't exist in the DOM at that point), and silently exited — which meant
+  `window.openApplicationModal` was **never defined at all**, so clicking
+  "Pedir Este Crédito" threw `TypeError: window.openApplicationModal is not
+  a function` and nothing happened. Fixed by deferring the script's setup
+  until `DOMContentLoaded`, so it works correctly regardless of where the
+  `<script>` tag sits relative to the modal markup on any page.
 - Rewrote the submission flow to call the new secure
   `submit_loan_application()` RPC instead of doing a three-step
   find/insert/update dance directly against the `clients` and

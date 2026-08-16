@@ -5,6 +5,22 @@
 (function () {
   'use strict';
 
+  // IMPORTANT: this script is loaded via a <script> tag that appears
+  // BEFORE the modal's HTML markup (#appModalOverlay) further down the
+  // page on some pages (e.g. index.html). If we looked up the DOM
+  // elements immediately, they wouldn't exist yet and this whole file
+  // would silently no-op — which is exactly what caused
+  // "window.openApplicationModal is not a function" on click. Waiting
+  // for DOMContentLoaded makes this work regardless of where the
+  // <script> tag sits relative to the modal markup.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  function init() {
+
   let currentStep = 1;
   const TOTAL_STEPS = 4;
   let prefillAmount = 10000;
@@ -249,4 +265,6 @@
       alert('Não foi possível enviar o seu pedido.\n\n' + err.message + '\n\nPor favor tente novamente ou contacte-nos diretamente.');
     }
   }
+
+  } // end init()
 })();
